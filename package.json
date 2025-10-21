@@ -16,7 +16,7 @@
     "format": "prettier --write .",
     "docs": "turbo run docs",
     "docs:dev": "pnpm --filter @x400/docs run docs:dev",
-    "prepare": "husky install"
+    "prepare": "husky"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,cjs,mjs,json,md,css,scss,rs}": [
