@@ -1,0 +1,49 @@
+site_name: X.400 Client Modernization
+site_description: Documentation for the X.400 client modernization project
+site_url: https://example.com/x400
+repo_url: https://github.com/x400-modernization/x400-client-modernization
+site_dir: site
+
+nav:
+  - Home: docs/index.md
+  - Getting Started: docs/getting-started.md
+  - Architecture: docs/architecture.md
+  - Transport Layer: docs/transport-layer.md
+  - Store & Data Model: docs/store-data-model.md
+  - CLI Reference (FW_SI compatibility): docs/cli-reference.md
+  - Security Model: docs/security-model.md
+  - Migration (FWM/FWZ import concept): docs/migration.md
+  - Roadmap & Status: docs/roadmap.md
+
+theme:
+  name: material
+  features:
+    - navigation.expand
+    - navigation.sections
+    - navigation.tabs
+    - content.code.copy
+    - content.tabs.link
+  palette:
+    - scheme: default
+      primary: blue
+      accent: light blue
+    - scheme: slate
+      primary: blue
+      accent: light blue
+  favicon: assets/favicon.ico
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - footnotes
+  - meta
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/x400-modernization

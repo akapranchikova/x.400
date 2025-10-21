@@ -1,0 +1,38 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "build": {
+    "beforeDevCommand": "pnpm --filter ui-client dev",
+    "beforeBuildCommand": "pnpm --filter ui-client build",
+    "devPath": "http://localhost:5173",
+    "distDir": "../dist"
+  },
+  "package": {
+    "productName": "X400ModernizedClient",
+    "version": "0.1.0"
+  },
+  "tauri": {
+    "bundle": {
+      "active": true,
+      "targets": "all",
+      "icon": [],
+      "identifier": "com.x400.modernized",
+      "windows": {
+        "certificateThumbprint": "REPLACE_WITH_CODESIGN_CERT"
+      },
+      "macOS": {
+        "signingIdentity": "Developer ID Application: Placeholder"
+      }
+    },
+    "security": {
+      "csp": null
+    },
+    "windows": [
+      {
+        "title": "X.400 Client Modernization",
+        "width": 1200,
+        "height": 800,
+        "resizable": true
+      }
+    ]
+  }
+}
