@@ -64,7 +64,7 @@ jobs:
           path: pnpm-lock.yaml
 
   build:
-    name: Build packages (JS + Rust, без docs)
+    name: Build packages (JS + Rust, without docs)
     needs: install
     runs-on: ubuntu-latest
     steps:
@@ -94,7 +94,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build (exclude docs)
-        run: pnpm -r build --filter=!@x400/docs
+        run: pnpm -r build
 
       - name: Upload UI dist
         if: always()
