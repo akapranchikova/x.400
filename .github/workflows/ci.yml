@@ -19,19 +19,8 @@ jobs:
           version: 8
       - uses: actions/setup-node@v4
         with:
-          node-version: 'lts/*'
-          cache: 'pnpm'
+          node-version: 'lts/*' # без cache — в этой джобе install не выполняется
       - uses: dtolnay/rust-toolchain@stable
-      - name: Detect pnpm store
-        id: pnpm-cache
-        run: echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
-      - name: Cache pnpm store
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.pnpm-cache.outputs.path }}
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-
 
   install:
     name: Install dependencies
@@ -46,20 +35,20 @@ jobs:
         with:
           node-version: 'lts/*'
           cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
       - uses: dtolnay/rust-toolchain@stable
-      - name: Restore pnpm store
-        id: pnpm-cache
-        run: echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@v3
-        with:
-          path: ${{ steps.pnpm-cache.outputs.path }}
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-
+
+      # pnpm
       - name: Install
         run: pnpm install --frozen-lockfile
+
+      # Cargo cache
+      - name: Ensure cargo cache directories
+        run: |
+          mkdir -p ~/.cargo/registry
+          mkdir -p ~/.cargo/git
       - name: Cache cargo registry
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
@@ -67,6 +56,7 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('packages/core-service/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
+
       - name: Upload pnpm lockfile
         uses: actions/upload-artifact@v4
         with:
@@ -86,20 +76,15 @@ jobs:
         with:
           node-version: 'lts/*'
           cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
       - uses: dtolnay/rust-toolchain@stable
-      - name: Restore pnpm store
-        id: pnpm-cache
-        run: echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@v3
-        with:
-          path: ${{ steps.pnpm-cache.outputs.path }}
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-
+
       - name: pnpm install
         run: pnpm install --frozen-lockfile
+
       - name: Build
         run: pnpm build
+
       - name: Upload UI dist
         if: always()
         uses: actions/upload-artifact@v4
@@ -107,6 +92,7 @@ jobs:
           name: ui-client-dist
           path: apps/ui-client/dist
           if-no-files-found: ignore
+
       - name: Upload Rust target
         if: always()
         uses: actions/upload-artifact@v4
@@ -128,20 +114,15 @@ jobs:
         with:
           node-version: 'lts/*'
           cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
       - uses: dtolnay/rust-toolchain@stable
-      - name: Restore pnpm store
-        id: pnpm-cache
-        run: echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@v3
-        with:
-          path: ${{ steps.pnpm-cache.outputs.path }}
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-
+
       - name: pnpm install
         run: pnpm install --frozen-lockfile
+
       - name: Run vitest
         run: pnpm test
+
       - name: Run cargo tests
         run: pnpm --filter @x400/core-service exec cargo test --workspace --all-features
 
@@ -158,12 +139,17 @@ jobs:
         with:
           node-version: 'lts/*'
           cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+
       - name: Install mkdocs-material
         run: pip install mkdocs-material
+
       - name: pnpm install
         run: pnpm install --frozen-lockfile
+
       - name: Build docs
         run: pnpm --filter @x400/docs run docs:build
+
       - name: Upload docs site
         uses: actions/upload-artifact@v4
         with:
