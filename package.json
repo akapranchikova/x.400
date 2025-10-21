@@ -10,7 +10,7 @@
   "packageManager": "pnpm@8.15.4",
   "scripts": {
     "dev": "turbo run dev",
-    "build": "turbo run build",
+    "build": "turbo run build --filter=!@x400/docs",
     "test": "turbo run test",
     "lint": "turbo run lint",
     "format": "prettier --write .",
