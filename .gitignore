@@ -1,6 +1,8 @@
 node_modules
 .DS_Store
 .dist
+dist
+.idea
 .env*
 *.log
 apps/ui-client/dist
