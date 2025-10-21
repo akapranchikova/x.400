@@ -9,7 +9,7 @@
     "docs:build": "mkdocs build -f mkdocs.yml",
     "lint": "echo 'MkDocs lint placeholder'",
     "test": "echo 'No tests for docs package'",
-    "build": "echo 'MkDocs build'"
+    "build": "mkdocs build -f mkdocs.yml"
   },
   "devDependencies": {
     "typescript": "^5.3.3"
