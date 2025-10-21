@@ -19,7 +19,7 @@ jobs:
           version: 8
       - uses: actions/setup-node@v4
         with:
-          node-version: 'lts/*' # без cache — в этой джобе install не выполняется
+          node-version: 'lts/*'
       - uses: dtolnay/rust-toolchain@stable
 
   install:
@@ -38,7 +38,7 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
       - uses: dtolnay/rust-toolchain@stable
 
-      # pnpm
+      # pnpm deps
       - name: Install
         run: pnpm install --frozen-lockfile
 
@@ -64,7 +64,7 @@ jobs:
           path: pnpm-lock.yaml
 
   build:
-    name: Build packages
+    name: Build packages (JS + Rust, без docs)
     needs: install
     runs-on: ubuntu-latest
     steps:
@@ -79,11 +79,22 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
       - uses: dtolnay/rust-toolchain@stable
 
+      - name: Ensure cargo on PATH
+        run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Tool versions
+        run: |
+          which cargo || true
+          cargo --version || true
+          rustc --version || true
+          pnpm -v
+          node -v
+
       - name: pnpm install
         run: pnpm install --frozen-lockfile
 
-      - name: Build
-        run: pnpm build
+      - name: Build (exclude docs)
+        run: pnpm -r build --filter=!@x400/docs
 
       - name: Upload UI dist
         if: always()
@@ -117,6 +128,9 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
       - uses: dtolnay/rust-toolchain@stable
 
+      - name: Ensure cargo on PATH
+        run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
       - name: pnpm install
         run: pnpm install --frozen-lockfile
 
@@ -141,8 +155,8 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: pnpm-lock.yaml
 
-      - name: Install mkdocs-material
-        run: pip install mkdocs-material
+      - name: Install mkdocs + theme
+        run: pip install mkdocs mkdocs-material
 
       - name: pnpm install
         run: pnpm install --frozen-lockfile
