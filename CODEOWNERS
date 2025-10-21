@@ -1,0 +1,9 @@
+# Default owners for the X.400 Client Modernization project
+*       @x400-modernization/core-team
+
+/apps/ui-client/     @x400-modernization/ui-leads
+/packages/core-service/ @x400-modernization/rust-leads
+/packages/sdk-wrapper/  @x400-modernization/integration
+/packages/cli/          @x400-modernization/cli
+/packages/docs/         @x400-modernization/docs
+/packages/shared/       @x400-modernization/platform

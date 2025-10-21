@@ -1,0 +1,17 @@
+{
+  "name": "@x400/docs",
+  "version": "0.1.0",
+  "description": "Documentation site for the X.400 modernization project",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "docs:dev": "mkdocs serve -f mkdocs.yml",
+    "docs:build": "mkdocs build -f mkdocs.yml",
+    "lint": "echo 'MkDocs lint placeholder'",
+    "test": "echo 'No tests for docs package'",
+    "build": "mkdocs build -f mkdocs.yml"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}

@@ -1,0 +1,24 @@
+[server]
+host = "127.0.0.1"
+port = 7878
+
+[server.tls]
+enabled = false
+min_version = "TLS1_3"
+certificate_path = "config/certs/dev-cert.pem"
+private_key_path = "config/certs/dev-key.pem"
+
+[database]
+url = "sqlite://data/x400.db"
+use_sqlcipher = false
+
+[security]
+require_auth = false
+api_key = "replace-me"
+
+[submit]
+default_strategy = 0
+
+[tracing]
+log_level = "info"
+trace_bundle_path = "data/trace-bundles"

@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "lib": ["ES2020", "DOM"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@x400/shared/*": ["packages/shared/src/*"],
+      "@x400/sdk-wrapper": ["packages/sdk-wrapper/src/index.ts"],
+      "@x400/sdk-wrapper/*": ["packages/sdk-wrapper/src/*"],
+      "@x400/cli/*": ["packages/cli/src/*"]
+    }
+  },
+  "include": ["packages/**/*", "apps/**/*", "scripts/**/*"],
+  "exclude": ["node_modules", "dist", "build", "target"]
+}
