@@ -1,0 +1,172 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  setup:
+    name: Setup toolchains
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+      - uses: dtolnay/rust-toolchain@stable
+
+  install:
+    name: Install dependencies
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+      - uses: dtolnay/rust-toolchain@stable
+
+      # pnpm deps
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # Cargo cache
+      - name: Ensure cargo cache directories
+        run: |
+          mkdir -p ~/.cargo/registry
+          mkdir -p ~/.cargo/git
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-${{ hashFiles('packages/core-service/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Upload pnpm lockfile
+        uses: actions/upload-artifact@v4
+        with:
+          name: pnpm-lock
+          path: pnpm-lock.yaml
+
+  build:
+    name: Build packages (JS + Rust, without docs)
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Ensure cargo on PATH
+        run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Tool versions
+        run: |
+          which cargo || true
+          cargo --version || true
+          rustc --version || true
+          pnpm -v
+          node -v
+
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build (exclude docs)
+        run: pnpm build
+
+      - name: Upload UI dist
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-client-dist
+          path: apps/ui-client/dist
+          if-no-files-found: ignore
+
+      - name: Upload Rust target
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-service-target
+          path: packages/core-service/target
+          if-no-files-found: ignore
+
+  test:
+    name: Run tests
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Ensure cargo on PATH
+        run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+
+      - name: Run vitest
+        run: pnpm test
+
+      - name: Run cargo tests
+        run: pnpm --filter @x400/core-service exec cargo test --workspace --all-features
+
+  docs:
+    name: Build documentation
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install mkdocs + theme
+        run: pip install mkdocs mkdocs-material
+
+      - name: pnpm install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build docs
+        run: pnpm --filter @x400/docs run docs:build
+
+      - name: Upload docs site
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-site
+          path: packages/docs/site
+          if-no-files-found: error

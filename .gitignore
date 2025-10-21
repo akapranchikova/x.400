@@ -1,0 +1,12 @@
+node_modules
+.DS_Store
+.dist
+dist
+.idea
+.env*
+*.log
+apps/ui-client/dist
+packages/core-service/target
+packages/core-service/data/*.db
+packages/docs/site
+apps/ui-client/src-tauri/target

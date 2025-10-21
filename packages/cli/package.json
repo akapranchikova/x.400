@@ -1,0 +1,29 @@
+{
+  "name": "@x400/cli",
+  "version": "0.1.0",
+  "description": "Command line interface mirroring FW_SI.EXE for the X.400 modernization project",
+  "license": "MIT",
+  "bin": {
+    "x400-cli": "dist/index.js"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -w -p tsconfig.json",
+    "lint": "eslint 'src/**/*.{ts,tsx}'",
+    "test": "vitest run",
+    "format": "prettier --write 'src/**/*.{ts,tsx}'"
+  },
+  "dependencies": {
+    "@x400/sdk-wrapper": "workspace:*",
+    "@x400/shared": "workspace:*",
+    "commander": "^11.1.0",
+    "kleur": "^4.1.5"
+  },
+  "devDependencies": {
+    "vitest": "^1.2.2"
+  }
+}

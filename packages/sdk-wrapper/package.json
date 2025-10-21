@@ -1,0 +1,24 @@
+{
+  "name": "@x400/sdk-wrapper",
+  "version": "0.1.0",
+  "description": "TypeScript bindings and mock transport for the X.400 modernization project",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -w -p tsconfig.json",
+    "lint": "eslint 'src/**/*.{ts,tsx}'",
+    "test": "vitest run",
+    "format": "prettier --write 'src/**/*.{ts,tsx}'"
+  },
+  "dependencies": {
+    "@x400/shared": "workspace:*",
+    "axios": "^1.6.7"
+  },
+  "devDependencies": {
+    "vitest": "^1.2.2"
+  }
+}
