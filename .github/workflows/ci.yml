@@ -94,7 +94,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build (exclude docs)
-        run: pnpm -r build
+        run: pnpm build
 
       - name: Upload UI dist
         if: always()
