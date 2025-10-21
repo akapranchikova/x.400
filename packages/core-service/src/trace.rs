@@ -23,7 +23,8 @@ impl TraceManager {
             "payload": payload
         }));
         if guard.len() > 500 {
-            guard.drain(0..guard.len() - 500);
+          let drain_end = guard.len() - 500;
+          guard.drain(..drain_end);
         }
     }
 
