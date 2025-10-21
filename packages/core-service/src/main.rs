@@ -68,7 +68,7 @@ async fn main() -> anyhow::Result<()> {
     }
 
     let addr = SocketAddr::new(config.server.host.parse()?, config.server.port);
-    info!("Starting core service", %addr);
+    info!(%addr, "Starting core service");
 
     let listener = tokio::net::TcpListener::bind(addr).await?;
 
