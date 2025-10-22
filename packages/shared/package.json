@@ -30,7 +30,7 @@
     "format": "prettier --write 'src/**/*.{ts,tsx}'"
   },
   "dependencies": {
-    "pino": "^8.17.0",
+    "pino": "^9.13.1",
     "zod": "^3.22.4"
   },
   "devDependencies": {
