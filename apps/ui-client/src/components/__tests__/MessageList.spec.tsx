@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { makeThread } from '@x400/shared/testing';
+import { vi, describe, it, expect } from 'vitest';
 
 import { MessageList } from '../MessageList';
 
@@ -26,7 +27,13 @@ describe('MessageList', () => {
       />,
     );
 
-    expect(screen.getByRole('button', { name: thread[0].subject })).toHaveClass('bg-blue-100');
+    // Find the heading with exact subject, then climb to the wrapping button.
+    const btn = screen
+      .getByRole('heading', { name: thread[0].subject })
+      .closest('button') as HTMLButtonElement;
+
+    expect(btn).toBeInTheDocument();
+    expect(btn).toHaveClass('bg-blue-100'); // selected item is highlighted
   });
 
   it('calls onSelect when clicking a message', async () => {
@@ -42,7 +49,11 @@ describe('MessageList', () => {
       <MessageList messages={thread} selectedId={null} onSelect={handleSelect} loading={false} />,
     );
 
-    await user.click(screen.getByRole('button', { name: thread[1].subject }));
+    const btn = screen
+      .getByRole('heading', { name: thread[1].subject })
+      .closest('button') as HTMLButtonElement;
+
+    await user.click(btn);
     expect(handleSelect).toHaveBeenCalledWith(thread[1].id);
   });
 });

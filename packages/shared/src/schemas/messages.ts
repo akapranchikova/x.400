@@ -24,7 +24,7 @@ export const messageEnvelopeSchema = z.object({
   id: z.string(),
   subject: z.string(),
   sender: x400AddressSchema,
-  to: z.array(x400AddressSchema),
+  to: z.array(x400AddressSchema).min(1, 'At least one recipient is required'),
   cc: z.array(x400AddressSchema).default([]),
   bcc: z.array(x400AddressSchema).default([]),
   priority: z.enum(['normal', 'nonUrgent', 'urgent']).default('normal'),
@@ -44,7 +44,7 @@ export const messageContentSchema = z.object({
 export const messageSchema = z.object({
   envelope: messageEnvelopeSchema,
   content: messageContentSchema,
-  reports: z.array(reportSchema),
+  reports: z.array(reportSchema).default([]),
 });
 
 export type MessageStatus = z.infer<typeof messageStatusSchema>;

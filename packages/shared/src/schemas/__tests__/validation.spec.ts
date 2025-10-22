@@ -21,7 +21,7 @@ describe('shared schema validation', () => {
           to: [],
         },
       }),
-    ).toThrowError(/Array must contain at least 1 element/);
+    ).toThrowError(/At least one recipient is required/);
   });
 
   it('validates report transitions (delivery then read)', () => {
@@ -45,14 +45,23 @@ describe('shared schema validation', () => {
   });
 
   it('rejects O/R addresses without country', () => {
-    expect(() =>
-      x400AddressSchema.parse({
-        ...makeAddress(),
-        orName: {
-          ...makeAddress().orName,
-          c: '',
-        },
-      }),
-    ).toThrowError(/String must contain at least/);
+    const result = x400AddressSchema.safeParse({
+      ...makeAddress(),
+      orName: {
+        ...makeAddress().orName,
+        c: '',
+      },
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'too_small',
+          path: ['orName', 'c'],
+          message: expect.stringMatching(/Country is required/),
+        }),
+      ]),
+    );
   });
 });
