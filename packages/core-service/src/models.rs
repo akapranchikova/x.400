@@ -70,9 +70,10 @@ pub struct MessageEnvelope {
     pub message_id: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum MessageStatus {
+    #[default]
     Draft,
     Queued,
     Sent,
@@ -81,39 +82,23 @@ pub enum MessageStatus {
     Failed,
 }
 
-impl Default for MessageStatus {
-    fn default() -> Self {
-        MessageStatus::Draft
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "camelCase")]
 pub enum MessagePriority {
+    #[default]
     Normal,
     NonUrgent,
     Urgent,
 }
 
-impl Default for MessagePriority {
-    fn default() -> Self {
-        MessagePriority::Normal
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum MessageSensitivity {
+    #[default]
     Normal,
     Personal,
     Private,
     Confidential,
-}
-
-impl Default for MessageSensitivity {
-    fn default() -> Self {
-        MessageSensitivity::Normal
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
