@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import type { Folder } from '@x400/shared';
+
 import { getTransport } from '../lib/transport';
+
+import type { Folder } from '@x400/shared';
 
 export const useFolders = () => {
   const [folders, setFolders] = useState<Folder[]>([]);

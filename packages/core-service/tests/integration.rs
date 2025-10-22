@@ -116,7 +116,7 @@ async fn compose_and_fetch_message_flow() {
         .json::<serde_json::Value>()
         .await
         .unwrap();
-    assert!(list.as_array().unwrap().len() >= 1);
+    assert!(!list.as_array().unwrap().is_empty());
 
     let message = client
         .get(format!("{}/messages/{}", base_url, message_id))

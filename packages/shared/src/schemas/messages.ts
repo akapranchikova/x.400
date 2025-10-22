@@ -1,6 +1,7 @@
 import { z } from 'zod';
-import { folderIdSchema } from './folders';
+
 import { x400AddressSchema } from './addresses';
+import { folderIdSchema } from './folders';
 import { reportSchema } from './reports';
 
 export const messageStatusSchema = z.enum([

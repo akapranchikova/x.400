@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { Message, MessageEnvelope } from '@x400/shared';
+
 import { getTransport } from '../lib/transport';
+
+import type { Message, MessageEnvelope } from '@x400/shared';
 
 export const useMessages = (folder: string) => {
   const [messages, setMessages] = useState<MessageEnvelope[]>([]);
@@ -47,17 +49,37 @@ export const useMessages = (folder: string) => {
       const transport = getTransport();
       await transport.compose({
         sender: {
-          orName: { c: 'DE', o: sender, surname: 'Operator', ou: [], admd: undefined, prmd: undefined, givenName: undefined, initials: undefined, generationQualifier: undefined },
+          orName: {
+            c: 'DE',
+            o: sender,
+            surname: 'Operator',
+            ou: [],
+            admd: undefined,
+            prmd: undefined,
+            givenName: undefined,
+            initials: undefined,
+            generationQualifier: undefined,
+          },
           dda: [],
-          routingHints: []
+          routingHints: [],
         },
         recipients: recipients.map((entry) => ({
-          orName: { c: 'DE', o: entry, surname: 'Recipient', ou: [], admd: undefined, prmd: undefined, givenName: undefined, initials: undefined, generationQualifier: undefined },
+          orName: {
+            c: 'DE',
+            o: entry,
+            surname: 'Recipient',
+            ou: [],
+            admd: undefined,
+            prmd: undefined,
+            givenName: undefined,
+            initials: undefined,
+            generationQualifier: undefined,
+          },
           dda: [],
-          routingHints: []
+          routingHints: [],
         })),
         subject,
-        body
+        body,
       });
       await loadMessages();
     },

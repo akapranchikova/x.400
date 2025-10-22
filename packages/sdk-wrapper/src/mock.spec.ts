@@ -1,6 +1,7 @@
+import { makeMessage, makeEnvelope } from '@x400/shared/testing';
 import nock from 'nock';
 import { afterEach, describe, expect, it } from 'vitest';
-import { makeMessage, makeEnvelope } from '@x400/shared/testing';
+
 import { createMockTransport } from './mock';
 
 const BASE_URL = 'http://mocked-core';
@@ -25,7 +26,7 @@ describe('createMockTransport', () => {
       .get('/folders')
       .reply(200, [
         { id: 'inbox', name: 'Inbox', unreadCount: 1 },
-        { id: 'outbox', name: 'Outbox', unreadCount: 0 }
+        { id: 'outbox', name: 'Outbox', unreadCount: 0 },
       ])
       .get('/messages')
       .query({ folder: 'inbox' })
@@ -54,14 +55,14 @@ describe('createMockTransport', () => {
         message_id: envelope.id,
         queue_reference: `queue://outbox/${envelope.id}`,
         status: 'queued',
-        strategy: 1
+        strategy: 1,
       })
       .post('/submit')
       .reply(200, {
         message_id: envelope.id,
         queue_reference: `queue://outbox/${envelope.id}`,
         status: 'queued',
-        strategy: 2
+        strategy: 2,
       });
 
     const transport = createMockTransport({ baseUrl: BASE_URL });
@@ -69,7 +70,7 @@ describe('createMockTransport', () => {
       sender: envelope.sender,
       recipients: envelope.to,
       subject: envelope.subject,
-      body: 'Composed via test harness'
+      body: 'Composed via test harness',
     });
 
     expect(composeResult.status).toBe('queued');
@@ -83,10 +84,7 @@ describe('createMockTransport', () => {
   it('rejects when the upstream service times out', async () => {
     const envelope = makeEnvelope();
 
-    nock(BASE_URL)
-      .post('/submit')
-      .delayConnection(50)
-      .reply(504, { message: 'Gateway timeout' });
+    nock(BASE_URL).post('/submit').delayConnection(50).reply(504, { message: 'Gateway timeout' });
 
     const transport = createMockTransport({ baseUrl: BASE_URL, timeoutMs: 10 });
 

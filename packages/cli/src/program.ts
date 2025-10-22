@@ -1,6 +1,7 @@
-import { Command } from 'commander';
 import { createMockTransport, type TransportFactory } from '@x400/sdk-wrapper';
+import { Command } from 'commander';
 import { green, yellow } from 'kleur/colors';
+
 import { parseOrAddress, parseOrAddresses } from './utils';
 
 type GlobalOptions = { baseUrl: string };
@@ -13,7 +14,9 @@ type ProgramFactoryOptions = {
   createTransport?: TransportFactory;
 };
 
-export const buildProgram = ({ createTransport = createMockTransport }: ProgramFactoryOptions = {}) => {
+export const buildProgram = ({
+  createTransport = createMockTransport,
+}: ProgramFactoryOptions = {}) => {
   const program = new Command();
 
   program
@@ -73,7 +76,7 @@ export const buildProgram = ({ createTransport = createMockTransport }: ProgramF
           sender: parseOrAddress(cmdOptions.from),
           recipients: parseOrAddresses(cmdOptions.to),
           subject: cmdOptions.subject,
-          body: cmdOptions.body
+          body: cmdOptions.body,
         });
 
         console.log(green('Message submitted successfully'));
@@ -158,11 +161,11 @@ export const buildProgram = ({ createTransport = createMockTransport }: ProgramF
               subject: message.envelope.subject,
               status: message.envelope.status,
               folder: message.envelope.folder,
-              recipientCount: message.envelope.to.length
+              recipientCount: message.envelope.to.length,
             },
             null,
-            2
-          )
+            2,
+          ),
         );
       });
     });

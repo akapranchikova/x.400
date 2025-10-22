@@ -1,4 +1,3 @@
-import { addMinutes } from '../utils';
 import {
   messageContentSchema,
   messageEnvelopeSchema,
@@ -11,6 +10,7 @@ import {
   type Report,
   type X400Address,
 } from '../schemas';
+import { addMinutes } from '../utils';
 
 export function randomUUID() {
   return typeof crypto !== 'undefined' && 'randomUUID' in crypto

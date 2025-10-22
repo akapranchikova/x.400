@@ -1,11 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+
 import { FolderList } from '../FolderList';
 
 const folders = [
   { id: 'inbox', name: 'Inbox', unreadCount: 2 },
   { id: 'outbox', name: 'Outbox', unreadCount: 0 },
-  { id: 'archive', name: 'Archive', unreadCount: 5 }
+  { id: 'archive', name: 'Archive', unreadCount: 5 },
 ];
 
 describe('FolderList', () => {

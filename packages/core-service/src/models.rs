@@ -64,9 +64,10 @@ pub struct MessageEnvelope {
     pub message_id: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum MessageStatus {
+    #[default]
     Draft,
     Queued,
     Sent,
@@ -75,17 +76,19 @@ pub enum MessageStatus {
     Failed,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub enum MessagePriority {
+    #[default]
     Normal,
     NonUrgent,
     Urgent,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum MessageSensitivity {
+    #[default]
     Normal,
     Personal,
     Private,
@@ -164,22 +167,4 @@ pub struct MoveRequest {
 #[derive(Debug, Serialize)]
 pub struct TraceBundle {
     pub entries: Vec<serde_json::Value>,
-}
-
-impl Default for MessageStatus {
-    fn default() -> Self {
-        MessageStatus::Draft
-    }
-}
-
-impl Default for MessagePriority {
-    fn default() -> Self {
-        MessagePriority::Normal
-    }
-}
-
-impl Default for MessageSensitivity {
-    fn default() -> Self {
-        MessageSensitivity::Normal
-    }
 }

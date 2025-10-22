@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+
 import SwaggerParser from '@apidevtools/swagger-parser';
 import OpenAPIClientAxios from 'openapi-client-axios';
 import { describe, expect, it } from 'vitest';

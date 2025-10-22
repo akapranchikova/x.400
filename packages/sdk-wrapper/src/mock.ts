@@ -1,12 +1,13 @@
-import axios, { AxiosInstance } from 'axios';
 import {
   Folder,
   Message,
   MessageEnvelope,
   folderListSchema,
   messageSchema,
-  messageEnvelopeSchema
+  messageEnvelopeSchema,
 } from '@x400/shared';
+import axios, { AxiosInstance } from 'axios';
+
 import { IX400Transport, ISubmitResult, TransportFactory, TransportOptions } from './interfaces';
 
 const DEFAULT_BASE_URL = 'http://127.0.0.1:7878';
@@ -17,8 +18,8 @@ const createClient = (options: TransportOptions = {}): AxiosInstance => {
     timeout: options.timeoutMs ?? 5_000,
     headers: {
       'Content-Type': 'application/json',
-      ...(options.apiKey ? { Authorization: `Bearer ${options.apiKey}` } : {})
-    }
+      ...(options.apiKey ? { Authorization: `Bearer ${options.apiKey}` } : {}),
+    },
   });
 
   return instance;
@@ -28,18 +29,19 @@ const normalizeSubmitResult = (payload: any): ISubmitResult => ({
   messageId: payload.messageId ?? payload.message_id ?? '',
   queueReference: payload.queueReference ?? payload.queue_reference ?? '',
   status: (payload.status ?? 'queued') as ISubmitResult['status'],
-  diagnosticCode: payload.diagnosticCode ?? payload.diagnostic_code
+  diagnosticCode: payload.diagnosticCode ?? payload.diagnostic_code,
 });
 
 export const createMockTransport: TransportFactory = (options) => {
   const client = createClient(options);
 
   const connect = async () => ({
-    sessionId: (globalThis.crypto && 'randomUUID' in globalThis.crypto
-      ? globalThis.crypto.randomUUID()
-      : Math.random().toString(36).slice(2)),
+    sessionId:
+      globalThis.crypto && 'randomUUID' in globalThis.crypto
+        ? globalThis.crypto.randomUUID()
+        : Math.random().toString(36).slice(2),
     connectedAt: new Date().toISOString(),
-    peer: client.defaults.baseURL ?? DEFAULT_BASE_URL
+    peer: client.defaults.baseURL ?? DEFAULT_BASE_URL,
   });
 
   const folders = {
@@ -47,7 +49,7 @@ export const createMockTransport: TransportFactory = (options) => {
       const response = await client.get('/folders');
       const parsed = folderListSchema.parse(response.data);
       return parsed;
-    }
+    },
   };
 
   const messages = {
@@ -65,8 +67,8 @@ export const createMockTransport: TransportFactory = (options) => {
         envelope,
         content: {
           text: content,
-          attachments: []
-        }
+          attachments: [],
+        },
       });
       return normalizeSubmitResult(response.data);
     },
@@ -78,14 +80,14 @@ export const createMockTransport: TransportFactory = (options) => {
     },
     async archiveMessage(messageId: string): Promise<void> {
       await client.post(`/messages/${messageId}/archive`);
-    }
+    },
   };
 
   const trace = {
     async bundle() {
       const response = await client.get('/trace/bundle');
       return response.data as { entries: unknown[] };
-    }
+    },
   };
 
   const compose = async (payload: {
@@ -103,7 +105,7 @@ export const createMockTransport: TransportFactory = (options) => {
     folders,
     messages,
     trace,
-    compose
+    compose,
   } satisfies IX400Transport;
 };
 

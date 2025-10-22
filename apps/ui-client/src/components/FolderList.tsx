@@ -1,5 +1,6 @@
-import type { Folder } from '@x400/shared';
 import clsx from 'clsx';
+
+import type { Folder } from '@x400/shared';
 
 interface FolderListProps {
   folders: Folder[];
@@ -12,19 +13,24 @@ const folderNames: Record<string, string> = {
   outbox: 'Outbox',
   failed: 'Failed',
   archive: 'Archive',
-  followUp: 'Follow-up'
+  followUp: 'Follow-up',
 };
 
 export const FolderList = ({ folders, activeFolder, onSelect }: FolderListProps) => {
   return (
-    <nav aria-label="Folders" className="flex flex-col gap-2 p-4 bg-white/70 backdrop-blur rounded-lg shadow-sm">
+    <nav
+      aria-label="Folders"
+      className="flex flex-col gap-2 p-4 bg-white/70 backdrop-blur rounded-lg shadow-sm"
+    >
       {folders.map((folder) => (
         <button
           key={folder.id}
           type="button"
           className={clsx(
             'flex items-center justify-between rounded-md px-3 py-2 text-left transition focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500',
-            activeFolder === folder.id ? 'bg-blue-600 text-white shadow' : 'bg-white text-slate-700 hover:bg-blue-50',
+            activeFolder === folder.id
+              ? 'bg-blue-600 text-white shadow'
+              : 'bg-white text-slate-700 hover:bg-blue-50',
           )}
           onClick={() => onSelect(folder.id)}
         >

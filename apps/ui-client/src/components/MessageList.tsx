@@ -1,5 +1,6 @@
-import type { MessageEnvelope } from '@x400/shared';
 import clsx from 'clsx';
+
+import type { MessageEnvelope } from '@x400/shared';
 
 interface MessageListProps {
   messages: MessageEnvelope[];
@@ -13,7 +14,7 @@ const statusColors: Record<string, string> = {
   delivered: 'bg-blue-500',
   read: 'bg-purple-500',
   failed: 'bg-rose-500',
-  queued: 'bg-amber-500'
+  queued: 'bg-amber-500',
 };
 
 export const MessageList = ({ messages, selectedId, onSelect, loading }: MessageListProps) => {
@@ -39,10 +40,17 @@ export const MessageList = ({ messages, selectedId, onSelect, loading }: Message
           >
             <div className="flex items-center justify-between gap-2">
               <h3 className="text-sm font-semibold text-slate-800">{message.subject}</h3>
-              <span className={clsx('inline-flex h-2 w-2 rounded-full', statusColors[message.status] ?? 'bg-slate-400')} aria-hidden />
+              <span
+                className={clsx(
+                  'inline-flex h-2 w-2 rounded-full',
+                  statusColors[message.status] ?? 'bg-slate-400',
+                )}
+                aria-hidden
+              />
             </div>
             <p className="mt-1 text-xs text-slate-500">
-              {message.sender.orName.o ?? 'Unknown organization'} • {new Date(message.createdAt).toLocaleString()}
+              {message.sender.orName.o ?? 'Unknown organization'} •{' '}
+              {new Date(message.createdAt).toLocaleString()}
             </p>
           </button>
         </li>
