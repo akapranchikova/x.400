@@ -78,6 +78,8 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: build project
+        run: pnpm build
       - name: Run workspace tests
         run: pnpm test:all
 
