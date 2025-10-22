@@ -10,8 +10,11 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing/index.d.ts",
+      "import": "./dist/testing/index.js"
     }
   },
   "files": [
@@ -19,8 +22,8 @@
   ],
   "sideEffects": false,
   "scripts": {
-    "build": "tsup src/index.ts --dts --format esm,cjs --clean --sourcemap --treeshake",
-    "dev": "tsup src/index.ts --dts --format esm,cjs --watch",
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -w -p tsconfig.json",
     "lint": "eslint 'src/**/*.{ts,tsx}'",
     "test": "vitest run",
     "coverage": "vitest run --coverage",
@@ -33,7 +36,6 @@
   "devDependencies": {
     "@vitest/coverage-v8": "^1.2.2",
     "vitest": "^1.2.2",
-    "tsup": "^8.2.4",
-    "typescript": "^5.3.3"
+    "typescript": "^5.6.3"
   }
 }
