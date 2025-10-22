@@ -1,0 +1,5 @@
+[
+  { "id": "inbox", "name": "Inbox", "unreadCount": 1 },
+  { "id": "outbox", "name": "Outbox", "unreadCount": 0 },
+  { "id": "archive", "name": "Archive", "unreadCount": 0 }
+]

@@ -24,6 +24,13 @@ const createClient = (options: TransportOptions = {}): AxiosInstance => {
   return instance;
 };
 
+const normalizeSubmitResult = (payload: any): ISubmitResult => ({
+  messageId: payload.messageId ?? payload.message_id ?? '',
+  queueReference: payload.queueReference ?? payload.queue_reference ?? '',
+  status: (payload.status ?? 'queued') as ISubmitResult['status'],
+  diagnosticCode: payload.diagnosticCode ?? payload.diagnostic_code
+});
+
 export const createMockTransport: TransportFactory = (options) => {
   const client = createClient(options);
 
@@ -56,15 +63,18 @@ export const createMockTransport: TransportFactory = (options) => {
     async submitMessage(envelope: MessageEnvelope, content: string): Promise<ISubmitResult> {
       const response = await client.post('/submit', {
         envelope,
-        content
+        content: {
+          text: content,
+          attachments: []
+        }
       });
-      return response.data as ISubmitResult;
+      return normalizeSubmitResult(response.data);
     },
     async deleteMessage(messageId: string): Promise<void> {
       await client.delete(`/messages/${messageId}`);
     },
     async moveMessage(messageId: string, folderId: string): Promise<void> {
-      await client.post(`/messages/${messageId}/move`, { folderId });
+      await client.post(`/messages/${messageId}/move`, { folder_id: folderId });
     },
     async archiveMessage(messageId: string): Promise<void> {
       await client.post(`/messages/${messageId}/archive`);
@@ -85,7 +95,7 @@ export const createMockTransport: TransportFactory = (options) => {
     body: string;
   }) => {
     const response = await client.post('/compose', payload);
-    return response.data as ISubmitResult;
+    return normalizeSubmitResult(response.data);
   };
 
   return {

@@ -23,8 +23,8 @@ impl TraceManager {
             "payload": payload
         }));
         if guard.len() > 500 {
-          let drain_end = guard.len() - 500;
-          guard.drain(..drain_end);
+            let drain_end = guard.len() - 500;
+            guard.drain(..drain_end);
         }
     }
 
@@ -36,5 +36,23 @@ impl TraceManager {
 impl Default for TraceManager {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn records_are_buffered_and_trimmed() {
+        let trace = TraceManager::new();
+
+        for idx in 0..510 {
+            trace.record("event", json!({ "idx": idx })).await;
+        }
+
+        let bundle = trace.bundle().await;
+        assert_eq!(bundle.len(), 500);
+        assert!(bundle.first().unwrap()["payload"]["idx"].as_i64().unwrap() >= 10);
     }
 }

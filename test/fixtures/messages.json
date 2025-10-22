@@ -1,0 +1,38 @@
+[
+  {
+    "envelope": {
+      "id": "9f2a9f2a-5e51-47f7-a7d8-8a1055b417d8",
+      "subject": "Mocked welcome message",
+      "sender": {
+        "orName": {
+          "c": "DE",
+          "o": "Modernization",
+          "surname": "Operator"
+        }
+      },
+      "to": [
+        {
+          "orName": {
+            "c": "DE",
+            "o": "Modernization",
+            "surname": "Operator"
+          }
+        }
+      ],
+      "cc": [],
+      "bcc": [],
+      "priority": "normal",
+      "sensitivity": "normal",
+      "folder": "inbox",
+      "status": "delivered",
+      "createdAt": "2024-01-01T10:00:00.000Z",
+      "updatedAt": "2024-01-01T10:00:00.000Z",
+      "messageId": "<welcome@modernized.x400>"
+    },
+    "content": {
+      "text": "This payload is used by automated tests to simulate reading a message.",
+      "attachments": []
+    },
+    "reports": []
+  }
+]

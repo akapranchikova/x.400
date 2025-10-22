@@ -77,6 +77,7 @@ impl QueueManager {
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FolderInfo {
     pub id: String,
     pub name: String,
@@ -86,5 +87,91 @@ pub struct FolderInfo {
 impl Default for QueueManager {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::{
+        MessageEnvelope, MessagePriority, MessageSensitivity, MessageStatus, OrName, X400Address,
+    };
+    use chrono::Utc;
+
+    fn sample_envelope() -> MessageEnvelope {
+        MessageEnvelope {
+            id: Uuid::new_v4(),
+            subject: "Test".to_string(),
+            sender: X400Address {
+                or_name: OrName {
+                    c: "DE".to_string(),
+                    admd: None,
+                    prmd: None,
+                    o: Some("Sender".to_string()),
+                    ou: vec![],
+                    surname: Some("Operator".to_string()),
+                    given_name: None,
+                },
+                dda: vec![],
+                routing_hints: vec![],
+            },
+            to: vec![],
+            cc: vec![],
+            bcc: vec![],
+            folder: "drafts".to_string(),
+            status: MessageStatus::Draft,
+            priority: MessagePriority::Normal,
+            sensitivity: MessageSensitivity::Normal,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+            message_id: "<test@x400>".to_string(),
+        }
+    }
+
+    #[tokio::test]
+    async fn enqueue_moves_message_to_outbox() {
+        let queue = QueueManager::new();
+        let envelope = sample_envelope();
+        queue.enqueue(envelope.clone()).await;
+
+        let folders = queue.folders().await;
+        let outbox = folders.into_iter().find(|f| f.id == "outbox").unwrap();
+        assert_eq!(outbox.unread_count, 1);
+    }
+
+    #[tokio::test]
+    async fn move_message_updates_folder() {
+        let queue = QueueManager::new();
+        let envelope = sample_envelope();
+        let id = envelope.id;
+        queue.enqueue(envelope.clone()).await;
+
+        queue.move_message(id, "archive").await.unwrap();
+
+        let archived = queue
+            .folders()
+            .await
+            .into_iter()
+            .find(|f| f.id == "archive")
+            .unwrap();
+        assert_eq!(archived.unread_count, 1);
+    }
+
+    #[tokio::test]
+    async fn archive_alias_works() {
+        let queue = QueueManager::new();
+        let envelope = sample_envelope();
+        let id = envelope.id;
+        queue.enqueue(envelope.clone()).await;
+
+        queue.archive(id).await.unwrap();
+
+        let archive_folder = queue
+            .folders()
+            .await
+            .into_iter()
+            .find(|f| f.id == "archive")
+            .unwrap();
+        assert_eq!(archive_folder.unread_count, 1);
     }
 }
