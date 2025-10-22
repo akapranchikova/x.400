@@ -1,4 +1,4 @@
-import { makeMessage, makeEnvelope } from '@x400/shared/testing';
+import { makeMessage, makeEnvelope } from '@x400/shared';
 import { describe, expect, it, vi, beforeAll, afterAll, beforeEach } from 'vitest';
 
 import { buildProgram } from '../program';
