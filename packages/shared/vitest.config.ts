@@ -6,13 +6,13 @@ export default defineConfig({
     globals: true,
     include: ['src/**/*.spec.ts', 'src/**/*.test.ts'],
     coverage: {
-      provider: 'c8',
+      provider: 'v8',
       reporter: ['text', 'lcov', 'html'],
       reportsDirectory: 'coverage',
       lines: 0.8,
       functions: 0.8,
       statements: 0.8,
-      branches: 0.75
-    }
-  }
+      branches: 0.75,
+    },
+  },
 });

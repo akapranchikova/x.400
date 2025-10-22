@@ -9,13 +9,13 @@ export default defineConfig({
     setupFiles: './vitest.setup.ts',
     css: true,
     coverage: {
-      provider: 'c8',
+      provider: 'v8',
       reporter: ['text', 'lcov', 'html'],
       reportsDirectory: 'coverage',
       lines: 0.7,
       branches: 0.7,
       functions: 0.7,
-      statements: 0.7
-    }
-  }
+      statements: 0.7,
+    },
+  },
 });
