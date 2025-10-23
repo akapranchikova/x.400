@@ -12,6 +12,31 @@ import { IX400Transport, ISubmitResult, TransportFactory, TransportOptions } fro
 
 const DEFAULT_BASE_URL = 'http://127.0.0.1:7878';
 
+type TransportError = Error & {
+  status?: number;
+  code?: string;
+};
+
+const createTransportError = (error: unknown): TransportError => {
+  if (axios.isAxiosError(error)) {
+    const message =
+      typeof error.response?.data?.message === 'string'
+        ? error.response.data.message
+        : error.message;
+    const transportError = new Error(message) as TransportError;
+    transportError.name = 'X400TransportError';
+    if (error.response?.status) {
+      transportError.status = error.response.status;
+    }
+    if (typeof error.code === 'string') {
+      transportError.code = error.code;
+    }
+    return transportError;
+  }
+
+  return error instanceof Error ? (error as TransportError) : new Error('Unknown transport error');
+};
+
 const createClient = (options: TransportOptions = {}): AxiosInstance => {
   const instance = axios.create({
     baseURL: options.baseUrl ?? DEFAULT_BASE_URL,
@@ -20,7 +45,13 @@ const createClient = (options: TransportOptions = {}): AxiosInstance => {
       'Content-Type': 'application/json',
       ...(options.apiKey ? { Authorization: `Bearer ${options.apiKey}` } : {}),
     },
+    proxy: false,
   });
+
+  instance.interceptors.response.use(
+    (response) => response,
+    (error) => Promise.reject(createTransportError(error)),
+  );
 
   return instance;
 };
