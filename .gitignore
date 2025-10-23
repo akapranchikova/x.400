@@ -4,6 +4,7 @@ node_modules
 dist
 .idea
 .env*
+!.env.test
 *.log
 apps/ui-client/dist
 packages/core-service/target

@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { FolderList } from './components/FolderList';
-import { MessageList } from './components/MessageList';
-import { MessageDetail } from './components/MessageDetail';
+
 import { ComposeDialog } from './components/ComposeDialog';
+import { FolderList } from './components/FolderList';
+import { MessageDetail } from './components/MessageDetail';
+import { MessageList } from './components/MessageList';
 import { SettingsPanel } from './components/SettingsPanel';
 import { StatusBar } from './components/StatusBar';
 import { useFolders } from './hooks/useFolders';
@@ -19,7 +20,8 @@ const App = () => {
   const [lastSync, setLastSync] = useState<Date | null>(null);
 
   const { folders, loading: foldersLoading } = useFolders();
-  const { messages, selected, loading, error, selectMessage, reload, submitMessage } = useMessages(activeFolder);
+  const { messages, selected, loading, error, selectMessage, reload, submitMessage } =
+    useMessages(activeFolder);
 
   useEffect(() => {
     const init = async () => {
@@ -60,7 +62,12 @@ const App = () => {
     setLastSync(new Date());
   }, [messages.length]);
 
-  const handleComposeSubmit = async (subject: string, body: string, sender: string, recipients: string[]) => {
+  const handleComposeSubmit = async (
+    subject: string,
+    body: string,
+    sender: string,
+    recipients: string[],
+  ) => {
     await submitMessage(subject, body, sender, recipients);
     setComposeOpen(false);
     setLastSync(new Date());
@@ -101,7 +108,9 @@ const App = () => {
         <main className="grid flex-1 grid-cols-1 gap-4 md:grid-cols-[240px_minmax(300px,400px)_1fr]">
           <section aria-label="Folder list">
             {foldersLoading ? (
-              <div className="rounded-lg bg-white/70 p-4 text-sm text-slate-500">Loading folders…</div>
+              <div className="rounded-lg bg-white/70 p-4 text-sm text-slate-500">
+                Loading folders…
+              </div>
             ) : (
               <FolderList
                 folders={folders}
@@ -114,7 +123,10 @@ const App = () => {
             )}
           </section>
 
-          <section className="flex flex-col overflow-hidden rounded-lg bg-white/80 shadow" aria-label="Message list">
+          <section
+            className="flex flex-col overflow-hidden rounded-lg bg-white/80 shadow"
+            aria-label="Message list"
+          >
             <MessageList
               messages={messages}
               selectedId={selected?.envelope.id ?? null}

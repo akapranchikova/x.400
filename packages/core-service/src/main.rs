@@ -1,8 +1,5 @@
 use core_service::config::AppConfig;
-use core_service::handlers::{
-    archive_message, compose, delete_message, get_folders, get_message, list_messages, move_message, submit,
-    trace_bundle,
-};
+use core_service::handlers::build_router;
 use core_service::queue::QueueManager;
 use core_service::store::StoreManager;
 use core_service::trace::TraceManager;
@@ -40,26 +37,7 @@ async fn main() -> anyhow::Result<()> {
         config: Arc::new(config.clone()),
     };
 
-    let app = axum::Router::new()
-        .route("/folders", axum::routing::get(get_folders))
-        .route("/messages", axum::routing::get(list_messages))
-        .route(
-            "/messages/:id",
-            axum::routing::get(get_message).delete(delete_message),
-        )
-        .route(
-            "/messages/:id/move",
-            axum::routing::post(move_message),
-        )
-        .route(
-            "/messages/:id/archive",
-            axum::routing::post(archive_message),
-        )
-        .route("/compose", axum::routing::post(compose))
-        .route("/submit", axum::routing::post(submit))
-        .route("/trace/bundle", axum::routing::get(trace_bundle))
-        .with_state(state)
-        .layer(TraceLayer::new_for_http());
+    let app = build_router(state).layer(TraceLayer::new_for_http());
 
     if config.server.tls.enabled {
         warn!(

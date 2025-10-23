@@ -4,21 +4,39 @@
   "description": "TypeScript bindings and mock transport for the X.400 modernization project",
   "license": "MIT",
   "type": "module",
-  "main": "dist/index.js",
+  "sideEffects": false,
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist"],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "dev": "tsc -w -p tsconfig.json",
+    "build": "tsup src/index.ts --dts --format esm,cjs --clean --sourcemap --treeshake",
+    "dev": "tsup src/index.ts --dts --format esm,cjs --watch",
     "lint": "eslint 'src/**/*.{ts,tsx}'",
     "test": "vitest run",
+    "coverage": "vitest run --coverage",
     "format": "prettier --write 'src/**/*.{ts,tsx}'"
   },
   "dependencies": {
     "@x400/shared": "workspace:*",
-    "axios": "^1.6.7"
+    "axios": "^1.6.7",
+    "openapi-client-axios": "^7.5.0"
   },
   "devDependencies": {
-    "vitest": "^1.2.2"
+    "@apidevtools/swagger-parser": "^10.0.3",
+    "nock": "^13.5.5",
+    "tsup": "^8.2.4",
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.2",
+    "@vitest/coverage-v8": "^1.2.2"
   }
 }

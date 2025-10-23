@@ -1,0 +1,589 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "X.400 Core Service API",
+    "version": "0.1.0",
+    "description": "Contract between the UI/SDK wrapper and the Rust core-service"
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:7878",
+      "description": "Local development server"
+    }
+  ],
+  "paths": {
+    "/folders": {
+      "get": {
+        "summary": "List message folders",
+        "operationId": "listFolders",
+        "responses": {
+          "200": {
+            "description": "List of folders",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FolderList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/messages": {
+      "get": {
+        "summary": "List message envelopes in a folder",
+        "operationId": "listMessages",
+        "parameters": [
+          {
+            "name": "folder",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "inbox"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of message envelopes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MessageEnvelope"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/messages/{id}": {
+      "get": {
+        "summary": "Retrieve a message",
+        "operationId": "getMessage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Message payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Message not found"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a message",
+        "operationId": "deleteMessage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Message deleted"
+          },
+          "404": {
+            "description": "Message not found"
+          }
+        }
+      }
+    },
+    "/messages/{id}/move": {
+      "post": {
+        "summary": "Move a message to another folder",
+        "operationId": "moveMessage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Message moved"
+          },
+          "404": {
+            "description": "Message not found"
+          }
+        }
+      }
+    },
+    "/messages/{id}/archive": {
+      "post": {
+        "summary": "Archive a message",
+        "operationId": "archiveMessage",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Message archived"
+          },
+          "404": {
+            "description": "Message not found"
+          }
+        }
+      }
+    },
+    "/compose": {
+      "post": {
+        "summary": "Compose and queue a new message",
+        "operationId": "composeMessage",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComposeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Queued message response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmitResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/submit": {
+      "post": {
+        "summary": "Submit a prepared message",
+        "operationId": "submitMessage",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Submission accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmitResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/trace/bundle": {
+      "get": {
+        "summary": "Retrieve trace bundle",
+        "operationId": "traceBundle",
+        "responses": {
+          "200": {
+            "description": "Trace bundle payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraceBundle"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Folder": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "unreadCount": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": ["id", "name", "unreadCount"]
+      },
+      "FolderList": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Folder"
+        }
+      },
+      "X400Address": {
+        "type": "object",
+        "properties": {
+          "orName": {
+            "$ref": "#/components/schemas/OrName"
+          },
+          "dda": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Dda"
+            }
+          },
+          "routingHints": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["orName", "dda", "routingHints"]
+      },
+      "OrName": {
+        "type": "object",
+        "properties": {
+          "c": {
+            "type": "string"
+          },
+          "admd": {
+            "type": "string"
+          },
+          "prmd": {
+            "type": "string"
+          },
+          "o": {
+            "type": "string"
+          },
+          "ou": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "surname": {
+            "type": "string"
+          },
+          "givenName": {
+            "type": "string"
+          },
+          "initials": {
+            "type": "string"
+          },
+          "generationQualifier": {
+            "type": "string"
+          }
+        },
+        "required": ["c"],
+        "additionalProperties": false
+      },
+      "Dda": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": ["type", "value"],
+        "additionalProperties": false
+      },
+      "MessageEnvelope": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "sender": {
+            "$ref": "#/components/schemas/X400Address"
+          },
+          "to": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/X400Address"
+            }
+          },
+          "cc": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/X400Address"
+            }
+          },
+          "bcc": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/X400Address"
+            }
+          },
+          "folder": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["draft", "queued", "sent", "delivered", "read", "failed"]
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["normal", "nonUrgent", "urgent"]
+          },
+          "sensitivity": {
+            "type": "string",
+            "enum": ["normal", "personal", "private", "confidential"]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "messageId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "subject",
+          "sender",
+          "to",
+          "cc",
+          "bcc",
+          "folder",
+          "status",
+          "priority",
+          "sensitivity",
+          "createdAt",
+          "updatedAt",
+          "messageId"
+        ]
+      },
+      "MessageContent": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Attachment"
+            }
+          }
+        },
+        "required": ["text", "attachments"]
+      },
+      "Attachment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "mimeType": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": ["id", "filename", "mimeType", "size"]
+      },
+      "Report": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "messageId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["delivery", "nonDelivery", "read"]
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "diagnosticCode": {
+            "type": "string"
+          },
+          "supplementalInfo": {
+            "type": "string"
+          }
+        },
+        "required": ["id", "messageId", "type", "timestamp"]
+      },
+      "Message": {
+        "type": "object",
+        "properties": {
+          "envelope": {
+            "$ref": "#/components/schemas/MessageEnvelope"
+          },
+          "content": {
+            "$ref": "#/components/schemas/MessageContent"
+          },
+          "reports": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Report"
+            }
+          }
+        },
+        "required": ["envelope", "content", "reports"]
+      },
+      "SubmitResponse": {
+        "type": "object",
+        "properties": {
+          "message_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "queue_reference": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "strategy": {
+            "type": "integer"
+          }
+        },
+        "required": ["message_id", "queue_reference", "status", "strategy"]
+      },
+      "SubmitRequest": {
+        "type": "object",
+        "properties": {
+          "envelope": {
+            "$ref": "#/components/schemas/MessageEnvelope"
+          },
+          "content": {
+            "$ref": "#/components/schemas/MessageContent"
+          },
+          "strategy": {
+            "type": "integer"
+          }
+        },
+        "required": ["envelope", "content"],
+        "additionalProperties": false
+      },
+      "ComposeRequest": {
+        "type": "object",
+        "properties": {
+          "sender": {
+            "$ref": "#/components/schemas/X400Address"
+          },
+          "recipients": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/X400Address"
+            }
+          },
+          "subject": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "strategy": {
+            "type": "integer"
+          }
+        },
+        "required": ["sender", "recipients", "subject", "body"],
+        "additionalProperties": false
+      },
+      "TraceBundle": {
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": ["entries"]
+      },
+      "MoveRequest": {
+        "type": "object",
+        "properties": {
+          "folder_id": {
+            "type": "string"
+          }
+        },
+        "required": ["folder_id"],
+        "additionalProperties": false
+      }
+    }
+  }
+}

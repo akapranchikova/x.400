@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { messageSchema } from './messages';
+
 import { x400AddressSchema } from './addresses';
+import { messageSchema } from './messages';
 
 const sampleAddress = x400AddressSchema.parse({
   orName: {
     c: 'DE',
     o: 'Modernization',
-    surname: 'Operator'
-  }
+    surname: 'Operator',
+  },
 });
 
 describe('messageSchema', () => {
@@ -26,13 +27,13 @@ describe('messageSchema', () => {
         status: 'delivered',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        messageId: '<msg-1@example.com>'
+        messageId: '<msg-1@example.com>',
       },
       content: {
         text: 'Hi there',
-        attachments: []
+        attachments: [],
       },
-      reports: []
+      reports: [],
     });
 
     expect(message.envelope.subject).toBe('Hello');

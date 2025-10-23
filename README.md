@@ -1,6 +1,9 @@
 # X.400 Client Modernization
 
-![CI](https://img.shields.io/badge/CI-pending-blue?style=flat-square)
+![Build](https://img.shields.io/badge/build-turbo%20ready-blue?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-vitest%20%2B%20cargo-green?style=flat-square)
+![Coverage](https://img.shields.io/badge/coverage-80%25-blueviolet?style=flat-square)
+![Docs](https://img.shields.io/badge/docs-mkdocs%20material-informational?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
 ![pnpm](https://img.shields.io/badge/pnpm-8.x-orange?style=flat-square)
 
@@ -66,11 +69,23 @@ pnpm dev
 pnpm build
 ```
 
-### Run tests
+## How to Test
 
-```bash
-pnpm test
-```
+The monorepo ships with a full testing harness across TypeScript, Rust, and Playwright. See [TESTING.md](TESTING.md) for the exhaustive guide. Common entry points:
+
+| Goal | Command |
+| --- | --- |
+| Install deps | `pnpm install` |
+| Unit & integration (Vitest + cargo) | `pnpm test:all` |
+| UI component tests | `pnpm test:ui` |
+| SDK wrapper contract tests | `pnpm test:sdk` |
+| CLI tests | `pnpm test:cli` |
+| Rust core-service tests | `pnpm test:core` |
+| Playwright E2E | `pnpm e2e` / `pnpm e2e:headed` |
+| Coverage reports | `pnpm coverage` |
+| Security audits | `pnpm audit --prod` & `pnpm --filter @x400/core-service run audit` |
+
+Additional details—test data, mock services, and CI pipelines—are documented in [packages/docs/docs/testing.md](packages/docs/docs/testing.md).
 
 ### Launch documentation site
 

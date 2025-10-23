@@ -11,7 +11,16 @@
     },
     "test": {
       "dependsOn": ["^build"],
-      "outputs": []
+      "outputs": ["coverage/**", "test-results/**"]
+    },
+    "coverage": {
+      "dependsOn": ["test"],
+      "outputs": ["coverage/**", "test-results/**"]
+    },
+    "e2e": {
+      "dependsOn": ["build"],
+      "outputs": ["playwright-report/**", "test-results/**"],
+      "cache": false
     },
     "lint": {
       "outputs": []

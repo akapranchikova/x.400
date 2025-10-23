@@ -9,22 +9,8 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  setup:
-    name: Setup toolchains
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 8
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 'lts/*'
-      - uses: dtolnay/rust-toolchain@stable
-
-  install:
-    name: Install dependencies
-    needs: setup
+  build:
+    name: Build workspace artifacts
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -37,16 +23,8 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: pnpm-lock.yaml
       - uses: dtolnay/rust-toolchain@stable
-
-      # pnpm deps
-      - name: Install
+      - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      # Cargo cache
-      - name: Ensure cargo cache directories
-        run: |
-          mkdir -p ~/.cargo/registry
-          mkdir -p ~/.cargo/git
       - name: Cache cargo registry
         uses: actions/cache@v4
         with:
@@ -56,64 +34,11 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('packages/core-service/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
-
-      - name: Upload pnpm lockfile
-        uses: actions/upload-artifact@v4
-        with:
-          name: pnpm-lock
-          path: pnpm-lock.yaml
-
-  build:
-    name: Build packages (JS + Rust, without docs)
-    needs: install
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 8
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 'lts/*'
-          cache: 'pnpm'
-          cache-dependency-path: pnpm-lock.yaml
-      - uses: dtolnay/rust-toolchain@stable
-
-      - name: Ensure cargo on PATH
-        run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-
-      - name: Tool versions
-        run: |
-          which cargo || true
-          cargo --version || true
-          rustc --version || true
-          pnpm -v
-          node -v
-
-      - name: pnpm install
-        run: pnpm install --frozen-lockfile
-
-      - name: Build (exclude docs)
+      - name: Build monorepo (excluding docs)
         run: pnpm build
 
-      - name: Upload UI dist
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ui-client-dist
-          path: apps/ui-client/dist
-          if-no-files-found: ignore
-
-      - name: Upload Rust target
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: core-service-target
-          path: packages/core-service/target
-          if-no-files-found: ignore
-
-  test:
-    name: Run tests
+  lint:
+    name: Lint & format checks
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -127,21 +52,99 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: pnpm-lock.yaml
       - uses: dtolnay/rust-toolchain@stable
-
-      - name: Ensure cargo on PATH
-        run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-
-      - name: pnpm install
+      - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Run JS/TS lint
+        run: pnpm lint
+      - name: Run Rust lint
+        run: pnpm --filter @x400/core-service run lint
+      - name: Check formatting (Rust)
+        run: pnpm --filter @x400/core-service exec cargo fmt --all -- --check
 
-      - name: Run vitest
-        run: pnpm test
+  test:
+    name: Unit & integration tests
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: build project
+        run: pnpm build
+      - name: Run workspace tests
+        run: pnpm test:all
 
-      - name: Run cargo tests
-        run: pnpm --filter @x400/core-service exec cargo test --workspace --all-features
+  e2e:
+    name: Playwright end-to-end tests
+    needs: build
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Playwright browsers (linux)
+        if: runner.os == 'Linux'
+        run: pnpm exec playwright install --with-deps
+      - name: Install Playwright browsers (windows)
+        if: runner.os != 'Linux'
+        run: pnpm exec playwright install
+      - name: Run e2e tests
+        run: pnpm e2e
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.os }}
+          path: playwright-report
+          if-no-files-found: ignore
+
+  audit:
+    name: Dependency security audit
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Audit Node dependencies
+        run: pnpm audit --prod
+      - name: Install cargo-audit
+        run: cargo install cargo-audit --locked
+      - name: Audit Rust dependencies
+        run: pnpm --filter @x400/core-service run audit
 
   docs:
-    name: Build documentation
+    name: Build documentation site
     needs: test
     runs-on: ubuntu-latest
     steps:
@@ -154,17 +157,13 @@ jobs:
           node-version: 'lts/*'
           cache: 'pnpm'
           cache-dependency-path: pnpm-lock.yaml
-
-      - name: Install mkdocs + theme
+      - name: Install mkdocs tooling
         run: pip install mkdocs mkdocs-material
-
-      - name: pnpm install
+      - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
       - name: Build docs
         run: pnpm --filter @x400/docs run docs:build
-
-      - name: Upload docs site
+      - name: Upload docs artifact
         uses: actions/upload-artifact@v4
         with:
           name: docs-site

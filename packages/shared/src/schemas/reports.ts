@@ -1,4 +1,5 @@
 import { z } from 'zod';
+
 import { x400AddressSchema } from './addresses';
 
 export const reportTypeSchema = z.enum(['delivery', 'nonDelivery', 'read']);
@@ -10,7 +11,7 @@ export const reportSchema = z.object({
   timestamp: z.string(),
   recipient: x400AddressSchema,
   diagnosticCode: z.string().optional(),
-  supplementalInfo: z.string().optional()
+  supplementalInfo: z.string().optional(),
 });
 
 export type ReportType = z.infer<typeof reportTypeSchema>;

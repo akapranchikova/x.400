@@ -1,0 +1,32 @@
+[
+  {
+    "id": "f73ef0b5-d151-4ba9-a644-1ad3fd75c392",
+    "messageId": "9f2a9f2a-5e51-47f7-a7d8-8a1055b417d8",
+    "type": "delivery",
+    "timestamp": "2024-01-01T10:00:10.000Z",
+    "recipient": {
+      "orName": {
+        "c": "DE",
+        "o": "Modernization",
+        "surname": "Operator"
+      },
+      "dda": [],
+      "routingHints": []
+    }
+  },
+  {
+    "id": "1c52f102-5b26-4bad-8f49-0c694b42df35",
+    "messageId": "9f2a9f2a-5e51-47f7-a7d8-8a1055b417d8",
+    "type": "read",
+    "timestamp": "2024-01-01T10:02:00.000Z",
+    "recipient": {
+      "orName": {
+        "c": "DE",
+        "o": "Modernization",
+        "surname": "Operator"
+      },
+      "dda": [],
+      "routingHints": []
+    }
+  }
+]
