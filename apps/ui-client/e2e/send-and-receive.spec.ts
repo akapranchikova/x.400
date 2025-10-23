@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 import { injectAxe, checkA11y } from '@axe-core/playwright';
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -9,16 +9,54 @@ const folders = JSON.parse(readFileSync(path.join(fixturesDir, 'folders.json'), 
 const messages = JSON.parse(readFileSync(path.join(fixturesDir, 'messages.json'), 'utf-8'));
 const reports = JSON.parse(readFileSync(path.join(fixturesDir, 'reports.json'), 'utf-8'));
 
+const coreScheme = process.env.CORE_IPC_SCHEME ?? 'http';
+const coreHost = process.env.CORE_IPC_HOST ?? '127.0.0.1';
+const corePort = process.env.CORE_IPC_PORT ?? '3333';
+const coreBaseUrl = `${coreScheme}://${coreHost}:${corePort}`;
+const healthUrl = `${coreBaseUrl}/health`;
+const healthTimeoutMs = Number(process.env.PLAYWRIGHT_HEALTH_TIMEOUT ?? '15000');
+const healthIntervalMs = Number(process.env.PLAYWRIGHT_HEALTH_INTERVAL ?? '250');
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const waitForHealth = async (page: Page, url: string, timeoutMs: number, intervalMs: number) => {
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
+    const ok = await page.evaluate(async (target) => {
+      try {
+        const response = await fetch(target);
+        return response.ok;
+      } catch (error) {
+        return false;
+      }
+    }, url);
+
+    if (ok) {
+      return;
+    }
+
+    await wait(intervalMs);
+  }
+
+  throw new Error(`Service did not become healthy at ${url} within ${timeoutMs}ms`);
+};
+
 test.describe('Send and Receive flow', () => {
-  test('lists, reads, composes and verifies delivery reports', async ({ page }) => {
+  test('@flaky lists, reads, composes and verifies delivery reports', async ({ page }) => {
     const messageStore = new Map<string, any>();
     const envelopeState = messages.map((entry: any) => {
       messageStore.set(entry.envelope.id, entry);
       return entry.envelope;
     });
 
-    await page.route('http://127.0.0.1:7878/**', async (route, request) => {
+    await page.route(`${coreBaseUrl}/**`, async (route, request) => {
       const url = new URL(request.url());
+
+      if (request.method() === 'GET' && url.pathname === '/health') {
+        await route.fulfill({ json: { status: 'ok' } });
+        return;
+      }
 
       if (request.method() === 'GET' && url.pathname === '/folders') {
         await route.fulfill({ json: folders });
@@ -59,13 +97,13 @@ test.describe('Send and Receive flow', () => {
           status: 'queued',
           createdAt: now,
           updatedAt: now,
-          messageId: `<${id}@mocked.x400>`
+          messageId: `<${id}@mocked.x400>`,
         };
 
         const message = {
           envelope,
           content: { text: payload.body, attachments: [] },
-          reports: []
+          reports: [],
         };
 
         envelopeState.unshift(envelope);
@@ -79,7 +117,7 @@ test.describe('Send and Receive flow', () => {
           envelopeState[0] = {
             ...updated.envelope,
             createdAt: updated.envelope.createdAt,
-            updatedAt: updated.envelope.updatedAt
+            updatedAt: updated.envelope.updatedAt,
           };
         }, 150);
 
@@ -88,19 +126,23 @@ test.describe('Send and Receive flow', () => {
             message_id: id,
             queue_reference: `queue://outbox/${id}`,
             status: 'queued',
-            strategy: 1
-          }
+            strategy: 1,
+          },
         });
         return;
       }
 
       if (request.method() === 'GET' && url.pathname === '/trace/bundle') {
-        await route.fulfill({ json: { entries: [{ event: 'message.submit', payload: { status: 'delivered' } }] } });
+        await route.fulfill({
+          json: { entries: [{ event: 'message.submit', payload: { status: 'delivered' } }] },
+        });
         return;
       }
 
       await route.fallback();
     });
+
+    await waitForHealth(page, healthUrl, healthTimeoutMs, healthIntervalMs);
 
     await page.goto('/');
     await expect(page.getByRole('heading', { name: /client modernization/i })).toBeVisible();

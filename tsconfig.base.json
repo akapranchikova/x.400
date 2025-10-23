@@ -12,6 +12,7 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
+      "@x400/shared": ["packages/shared/src/index.ts"],
       "@x400/shared/*": ["packages/shared/src/*"],
       "@x400/sdk-wrapper": ["packages/sdk-wrapper/src/index.ts"],
       "@x400/sdk-wrapper/*": ["packages/sdk-wrapper/src/*"],

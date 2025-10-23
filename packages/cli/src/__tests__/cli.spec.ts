@@ -1,13 +1,17 @@
-import { makeMessage, makeEnvelope } from '@x400/shared';
 import { describe, expect, it, vi, beforeAll, afterAll, beforeEach } from 'vitest';
 
-import { buildProgram } from '../program';
+let sharedModule: Awaited<ReturnType<typeof importShared>>;
+
+async function importShared() {
+  return import('@x400/shared');
+}
 
 /**
  * Creates a mock transport with predictable responses.
  * Each test gets a fresh instance to avoid cross-test interference.
  */
 const createTransportMock = () => {
+  const { makeMessage } = sharedModule;
   const message = makeMessage();
 
   const transport = {
@@ -59,12 +63,27 @@ describe('CLI program', () => {
     consoleSpy.mockRestore();
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     consoleSpy.mockClear();
+    vi.resetModules();
+    vi.doMock('@x400/shared', async () => {
+      const actual = await vi.importActual<typeof import('../../../shared/src')>(
+        '../../../shared/src/index.ts',
+      );
+      return actual;
+    });
+    vi.doMock('@x400/sdk-wrapper', async () => {
+      const actual = await vi.importActual<typeof import('../../../sdk-wrapper/src')>(
+        '../../../sdk-wrapper/src/index.ts',
+      );
+      return actual;
+    });
+    sharedModule = await importShared();
   });
 
   it('lists folders when invoked with --folders', async () => {
     const { transport } = createTransportMock();
+    const { buildProgram } = await import('../program');
     const program = buildProgram({ createTransport: () => transport }).exitOverride();
 
     // For { from: 'user' }, pass only user args (no "node", no script name).
@@ -76,6 +95,7 @@ describe('CLI program', () => {
 
   it('retrieves a message summary via the message command', async () => {
     const { transport, message } = createTransportMock();
+    const { buildProgram } = await import('../program');
     const program = buildProgram({ createTransport: () => transport }).exitOverride();
 
     await program.parseAsync(['message', '--id', String(message.envelope.id)], { from: 'user' });
@@ -86,6 +106,7 @@ describe('CLI program', () => {
 
   it('parses addresses for create command and forwards to compose', async () => {
     const { transport } = createTransportMock();
+    const { buildProgram } = await import('../program');
     const program = buildProgram({ createTransport: () => transport }).exitOverride();
 
     await program.parseAsync(
@@ -109,11 +130,12 @@ describe('CLI program', () => {
 
   it('wait command polls until the queue is empty', async () => {
     const { transport } = createTransportMock();
+    const { buildProgram } = await import('../program');
     const program = buildProgram({ createTransport: () => transport }).exitOverride();
 
     // First call returns one queued message in outbox; second call returns empty.
     transport.messages.listMessages
-      .mockResolvedValueOnce([makeEnvelope({ folder: 'outbox', status: 'queued' })])
+      .mockResolvedValueOnce([sharedModule.makeEnvelope({ folder: 'outbox', status: 'queued' })])
       .mockResolvedValueOnce([]);
 
     // Use fake timers so we can deterministically progress the polling loop.
@@ -135,5 +157,68 @@ describe('CLI program', () => {
 
     expect(transport.messages.listMessages).toHaveBeenCalledTimes(2);
     expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Outbox is empty'));
+  });
+
+  it('prints environment details as JSON when requested', async () => {
+    const originalHost = process.env.CORE_IPC_HOST;
+    const originalPort = process.env.CORE_IPC_PORT;
+    const originalProfile = process.env.CLI_DEFAULT_PROFILE;
+    const originalMode = process.env.X400_MODE;
+
+    process.env.CORE_IPC_HOST = '192.168.0.10';
+    process.env.CORE_IPC_PORT = '4500';
+    process.env.CLI_DEFAULT_PROFILE = 'ci-profile';
+    process.env.X400_MODE = 'sdk';
+
+    try {
+      vi.resetModules();
+      vi.doMock('@x400/shared', async () => {
+        const actual = await vi.importActual<typeof import('../../../shared/src')>(
+          '../../../shared/src/index.ts',
+        );
+        return actual;
+      });
+      vi.doMock('@x400/sdk-wrapper', async () => {
+        const actual = await vi.importActual<typeof import('../../../sdk-wrapper/src')>(
+          '../../../sdk-wrapper/src/index.ts',
+        );
+        return actual;
+      });
+      sharedModule = await importShared();
+      const { buildProgram } = await import('../program');
+      const program = buildProgram().exitOverride();
+
+      await program.parseAsync(['env', '--json'], { from: 'user' });
+
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('"mode": "sdk"'));
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('"ipc": "http://192.168.0.10:4500"'),
+      );
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('"profile": "ci-profile"'));
+    } finally {
+      if (originalHost === undefined) {
+        delete process.env.CORE_IPC_HOST;
+      } else {
+        process.env.CORE_IPC_HOST = originalHost;
+      }
+
+      if (originalPort === undefined) {
+        delete process.env.CORE_IPC_PORT;
+      } else {
+        process.env.CORE_IPC_PORT = originalPort;
+      }
+
+      if (originalProfile === undefined) {
+        delete process.env.CLI_DEFAULT_PROFILE;
+      } else {
+        process.env.CLI_DEFAULT_PROFILE = originalProfile;
+      }
+
+      if (originalMode === undefined) {
+        delete process.env.X400_MODE;
+      } else {
+        process.env.X400_MODE = originalMode;
+      }
+    }
   });
 });

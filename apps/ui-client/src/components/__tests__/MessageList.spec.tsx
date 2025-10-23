@@ -1,7 +1,27 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { makeThread } from '@x400/shared/testing';
 import { vi, describe, it, expect } from 'vitest';
+
+const buildThread = (count: number) =>
+  Array.from({ length: count }, (_, index) => {
+    const timestamp = new Date(Date.now() - index * 1_000).toISOString();
+    return {
+      id: `message-${index}`,
+      subject: `Subject ${index}`,
+      folder: 'inbox',
+      status: 'read',
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      sender: {
+        orName: {
+          o: 'Modernization',
+          s: `Tester ${index}`,
+        },
+        address: `C=DE;O=Modernization;S=Tester${index}`,
+      },
+      to: [],
+    };
+  });
 
 import { MessageList } from '../MessageList';
 
@@ -12,11 +32,7 @@ describe('MessageList', () => {
   });
 
   it('renders envelopes and highlights the selected item', () => {
-    const thread = makeThread(2).map((message) => ({
-      ...message.envelope,
-      createdAt: message.envelope.createdAt,
-      updatedAt: message.envelope.updatedAt,
-    }));
+    const thread = buildThread(2);
 
     render(
       <MessageList
@@ -37,11 +53,7 @@ describe('MessageList', () => {
   });
 
   it('calls onSelect when clicking a message', async () => {
-    const thread = makeThread(2).map((message) => ({
-      ...message.envelope,
-      createdAt: message.envelope.createdAt,
-      updatedAt: message.envelope.updatedAt,
-    }));
+    const thread = buildThread(2);
     const user = userEvent.setup();
     const handleSelect = vi.fn();
 

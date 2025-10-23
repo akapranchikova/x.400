@@ -13,11 +13,11 @@ Modernization of the MailmaX.400/FileWork desktop suite built as a pnpm + Turbo 
 
 The goal is to provide a secure, cross-platform replacement for legacy X.400 tooling while maintaining operational parity. The modernization introduces:
 
-* A React + Tauri desktop client for Windows, Linux, and macOS.
-* A Rust IPC service with HTTP endpoints for queue management, storage, and trace bundles.
-* A TypeScript SDK wrapper abstracting the eventual vendor SDK integration.
-* A Node.js CLI for automation scenarios still using FW_SI command verbs.
-* MkDocs documentation and a roadmap aligned with modernization milestones.
+- A React + Tauri desktop client for Windows, Linux, and macOS.
+- A Rust IPC service with HTTP endpoints for queue management, storage, and trace bundles.
+- A TypeScript SDK wrapper abstracting the eventual vendor SDK integration.
+- A Node.js CLI for automation scenarios still using FW_SI command verbs.
+- MkDocs documentation and a roadmap aligned with modernization milestones.
 
 ## Current status
 
@@ -33,14 +33,14 @@ The goal is to provide a secure, cross-platform replacement for legacy X.400 too
 
 ## Feature matrix
 
-| Capability | Status |
-| --- | --- |
-| X.400 P7 Operations: Bind/Submit/Fetch/List/Delete/Register-MS | **Mocked** |
-| DR/NDR/Read Reports | **Mocked** |
-| Queue Manager | **Implemented (mock)** |
-| Local Store (SQLite) | **Implemented (dev)** |
-| Import FWM/FWZ | **Planned** |
-| CLI FW_SI compatibility | **Planned** |
+| Capability                                                     | Status                 |
+| -------------------------------------------------------------- | ---------------------- |
+| X.400 P7 Operations: Bind/Submit/Fetch/List/Delete/Register-MS | **Mocked**             |
+| DR/NDR/Read Reports                                            | **Mocked**             |
+| Queue Manager                                                  | **Implemented (mock)** |
+| Local Store (SQLite)                                           | **Implemented (dev)**  |
+| Import FWM/FWZ                                                 | **Planned**            |
+| CLI FW_SI compatibility                                        | **Planned**            |
 
 ## Getting started
 
@@ -63,6 +63,27 @@ pnpm install
 pnpm dev
 ```
 
+### Environment Variables
+
+Copy the provided defaults and verify required values before starting any apps or tests:
+
+```bash
+pnpm run env:copy
+pnpm run env:check
+```
+
+Key variables shipped in [`.env.example`](./.env.example):
+
+| Variable                          | Default                 | Used by                                      |
+| --------------------------------- | ----------------------- | -------------------------------------------- |
+| `CORE_IPC_HOST` / `CORE_IPC_PORT` | `127.0.0.1` / `3333`    | Rust core-service, CLI, UI mocks, Playwright |
+| `CORE_DB_PATH`                    | `./data/x400.sqlite`    | Rust core-service                            |
+| `X400_MODE`                       | `mock`                  | CLI, SDK wrapper                             |
+| `CLI_DEFAULT_PROFILE`             | `default`               | CLI `env` sanity command                     |
+| `TAURI_DEV_HOST`                  | `http://localhost:1420` | Desktop shell / Tauri dev server             |
+
+See [docs/environment.md](packages/docs/docs/environment.md) for the full catalog and CI behaviour notes.
+
 ### Build all packages
 
 ```bash
@@ -73,17 +94,17 @@ pnpm build
 
 The monorepo ships with a full testing harness across TypeScript, Rust, and Playwright. See [TESTING.md](TESTING.md) for the exhaustive guide. Common entry points:
 
-| Goal | Command |
-| --- | --- |
-| Install deps | `pnpm install` |
-| Unit & integration (Vitest + cargo) | `pnpm test:all` |
-| UI component tests | `pnpm test:ui` |
-| SDK wrapper contract tests | `pnpm test:sdk` |
-| CLI tests | `pnpm test:cli` |
-| Rust core-service tests | `pnpm test:core` |
-| Playwright E2E | `pnpm e2e` / `pnpm e2e:headed` |
-| Coverage reports | `pnpm coverage` |
-| Security audits | `pnpm audit --prod` & `pnpm --filter @x400/core-service run audit` |
+| Goal                                | Command                                                            |
+| ----------------------------------- | ------------------------------------------------------------------ |
+| Install deps                        | `pnpm install`                                                     |
+| Unit & integration (Vitest + cargo) | `pnpm test:all`                                                    |
+| UI component tests                  | `pnpm test:ui`                                                     |
+| SDK wrapper contract tests          | `pnpm test:sdk`                                                    |
+| CLI tests                           | `pnpm test:cli`                                                    |
+| Rust core-service tests             | `pnpm test:core`                                                   |
+| Playwright E2E                      | `pnpm e2e` / `pnpm e2e:headed`                                     |
+| Coverage reports                    | `pnpm coverage`                                                    |
+| Security audits                     | `pnpm audit --prod` & `pnpm --filter @x400/core-service run audit` |
 
 Additional details—test data, mock services, and CI pipelines—are documented in [packages/docs/docs/testing.md](packages/docs/docs/testing.md).
 

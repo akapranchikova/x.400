@@ -1,0 +1,30 @@
+import 'dotenv/config';
+
+const parseNumber = (value: string | undefined, fallback: number): number => {
+  if (!value) return fallback;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isNaN(parsed) ? fallback : parsed;
+};
+
+const sanitizeMode = (value: string | undefined): 'mock' | 'sdk' => {
+  const normalized = (value ?? 'mock').toLowerCase();
+  return normalized === 'sdk' ? 'sdk' : 'mock';
+};
+
+const IPC_HOST = process.env.CORE_IPC_HOST ?? '127.0.0.1';
+const IPC_PORT = parseNumber(process.env.CORE_IPC_PORT, 3333);
+const IPC_SCHEME = process.env.CORE_IPC_SCHEME ?? 'http';
+
+export const ENV = {
+  NODE_ENV: process.env.NODE_ENV ?? 'development',
+  IPC_HOST,
+  IPC_PORT,
+  IPC_SCHEME,
+  IPC_URL: `${IPC_SCHEME}://${IPC_HOST}:${IPC_PORT}`,
+  CORE_DB_PATH: process.env.CORE_DB_PATH ?? './data/x400.sqlite',
+  X400_MODE: sanitizeMode(process.env.X400_MODE),
+  X400_PROFILE: process.env.X400_PROFILE ?? 'default',
+  CLI_DEFAULT_PROFILE: process.env.CLI_DEFAULT_PROFILE ?? process.env.X400_PROFILE ?? 'default',
+} as const;
+
+export type EnvConfig = typeof ENV;

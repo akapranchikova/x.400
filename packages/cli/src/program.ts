@@ -1,4 +1,5 @@
 import { createMockTransport, type TransportFactory } from '@x400/sdk-wrapper';
+import { ENV } from '@x400/shared';
 import { Command } from 'commander';
 import { green, yellow } from 'kleur/colors';
 
@@ -19,17 +20,40 @@ export const buildProgram = ({
 }: ProgramFactoryOptions = {}) => {
   const program = new Command();
 
+  const defaultBaseUrl = ENV.IPC_URL;
+
   program
     .name('x400-cli')
     .description('Modern replacement for FW_SI.EXE interacting with the local X.400 IPC service')
     .version('0.1.0')
-    .option('--base-url <url>', 'Base URL of the local IPC endpoint', 'http://127.0.0.1:7878');
+    .option('--base-url <url>', 'Base URL of the local IPC endpoint', defaultBaseUrl);
 
   const withTransport = async <T>(options: GlobalOptions, handler: Handler<T>) => {
     const transport = createTransport({ baseUrl: options.baseUrl });
     await transport.connect();
     return handler(transport);
   };
+
+  program
+    .command('env')
+    .description('Inspect resolved environment configuration')
+    .option('--json', 'Output machine-readable JSON', false)
+    .action((cmdOptions) => {
+      const details = {
+        mode: ENV.X400_MODE,
+        ipc: ENV.IPC_URL,
+        profile: ENV.CLI_DEFAULT_PROFILE,
+      };
+
+      if (cmdOptions.json) {
+        console.log(JSON.stringify(details, null, 2));
+        return;
+      }
+
+      console.log(`Mode: ${details.mode}`);
+      console.log(`IPC: ${details.ipc}`);
+      console.log(`Profile: ${details.profile}`);
+    });
 
   program
     .command('list')
