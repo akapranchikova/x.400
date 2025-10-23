@@ -1,0 +1,65 @@
+name: UI Client E2E (Playwright inside container)
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    name: Run Playwright tests in container
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.47.2-jammy
+    env:
+      CI: "true"
+      PORT: "5173"
+      HOST: "0.0.0.0"
+      BASE_URL: "http://localhost:5173"
+      PLAYWRIGHT_JUNIT_OUTPUT: "apps/ui-client/test-results/junit.xml"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@9 --activate
+          pnpm -v
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Ensure Playwright Chromium
+        run: pnpm --filter ui-client exec playwright install chromium
+
+      - name: Run e2e tests
+        run: |
+          pnpm --filter ui-client exec playwright test \
+            -c apps/ui-client/playwright.config.ts \
+            --reporter=line,html,junit
+
+      - name: Upload Playwright HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-client-playwright-report
+          path: apps/ui-client/playwright-report
+          if-no-files-found: warn
+
+      - name: Upload Playwright test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-client-playwright-test-results
+          path: apps/ui-client/test-results
+          if-no-files-found: warn
