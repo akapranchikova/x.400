@@ -1,5 +1,6 @@
 import { test, expect, Page } from '@playwright/test';
-import { injectAxe, checkA11y } from '@axe-core/playwright';
+import { AxeBuilder } from '@axe-core/playwright';
+import type { AxeResults } from 'axe-core';
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -40,6 +41,24 @@ const waitForHealth = async (page: Page, url: string, timeoutMs: number, interva
   }
 
   throw new Error(`Service did not become healthy at ${url} within ${timeoutMs}ms`);
+};
+
+const describeAxeViolations = (violations: AxeResults['violations']) => {
+  return violations
+    .map((violation) => {
+      const nodes = violation.nodes.map((node) => `    - ${node.target.join(' ')}`).join('\n');
+      return `${violation.id} (${violation.impact ?? 'no impact reported'})\n  ${violation.help}\n${nodes}`;
+    })
+    .join('\n\n');
+};
+
+const expectPageToBeAccessible = async (page: Page) => {
+  const results = await new AxeBuilder({ page }).analyze();
+
+  expect(
+    results.violations,
+    describeAxeViolations(results.violations) || 'axe-core reported no violations',
+  ).toHaveLength(0);
 };
 
 test.describe('Send and Receive flow', () => {
@@ -153,8 +172,7 @@ test.describe('Send and Receive flow', () => {
     await page.goto('/');
     await expect(page.getByRole('heading', { name: /client modernization/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /inbox/i })).toBeVisible();
-    await injectAxe(page);
-    await checkA11y(page, 'body', { detailedReport: true });
+    await expectPageToBeAccessible(page);
     await expect(page.getByRole('button', { name: /mocked welcome message/i })).toBeVisible();
 
     await page.getByRole('button', { name: /mocked welcome message/i }).click();
