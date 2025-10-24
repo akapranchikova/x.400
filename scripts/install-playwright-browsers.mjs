@@ -4,9 +4,22 @@ import process from 'node:process';
 const baseArgs = ['--filter', 'ui-client', 'exec', 'playwright'];
 
 const run = (args) => {
-  const result = spawnSync('pnpm', [...baseArgs, ...args], {
-    stdio: 'inherit',
-  });
+  const pnpmArgs = [...baseArgs, ...args];
+  const pnpmExecPath = process.env.npm_execpath;
+
+  let result;
+
+  if (pnpmExecPath && process.execPath) {
+    result = spawnSync(process.execPath, [pnpmExecPath, ...pnpmArgs], {
+      stdio: 'inherit',
+    });
+  } else {
+    const pnpmBinary = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
+    result = spawnSync(pnpmBinary, pnpmArgs, {
+      stdio: 'inherit',
+      shell: process.platform === 'win32',
+    });
+  }
 
   if (result.error) {
     console.error(result.error);
