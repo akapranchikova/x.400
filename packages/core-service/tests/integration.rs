@@ -1,8 +1,6 @@
 use core_service::config::AppConfig;
 use core_service::mock_provider::MockDeliveryProvider;
-use core_service::models::{
-    Address, Message, MessageContent, MessageEnvelope, MessageStatus,
-};
+use core_service::models::{Address, Message, MessageContent, MessageEnvelope, MessageStatus};
 use core_service::queue::QueueManager;
 use core_service::store::StoreManager;
 use core_service::trace::TraceManager;
@@ -19,7 +17,11 @@ fn compose_and_fetch_message_flow() {
     let (queue, store, trace) = build_state();
     let provider = MockDeliveryProvider::new(queue.clone(), store.clone(), trace.clone());
 
-    let mut envelope = MessageEnvelope::new("Integration message", Address::sample(), vec![Address::sample()]);
+    let mut envelope = MessageEnvelope::new(
+        "Integration message",
+        Address::sample(),
+        vec![Address::sample()],
+    );
     envelope.folder = "inbox".into();
     let message_id = envelope.id.clone();
     let message = Message {
@@ -74,5 +76,7 @@ fn seeding_demo_data_populates_store_and_queue() {
     });
 
     let bundle = trace.bundle();
-    assert!(bundle.iter().any(|entry| entry.event == "mock.read" && entry.message == id));
+    assert!(bundle
+        .iter()
+        .any(|entry| entry.event == "mock.read" && entry.message == id));
 }

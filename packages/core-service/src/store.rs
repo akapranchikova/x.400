@@ -28,10 +28,7 @@ impl StoreManager {
     }
 
     pub fn get(&self, id: &MessageId) -> Option<Message> {
-        self.inner
-            .lock()
-            .ok()
-            .and_then(|map| map.get(id).cloned())
+        self.inner.lock().ok().and_then(|map| map.get(id).cloned())
     }
 
     pub fn delete(&self, id: &MessageId) -> bool {

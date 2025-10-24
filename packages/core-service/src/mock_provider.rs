@@ -13,7 +13,11 @@ pub struct MockDeliveryProvider {
 
 impl MockDeliveryProvider {
     pub fn new(queue: QueueManager, store: StoreManager, trace: TraceManager) -> Self {
-        Self { queue, store, trace }
+        Self {
+            queue,
+            store,
+            trace,
+        }
     }
 
     pub fn dispatch(&self, message: Message) -> MessageId {

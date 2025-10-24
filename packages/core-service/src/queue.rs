@@ -20,7 +20,10 @@ impl QueueManager {
     }
 
     pub fn dequeue(&self) -> Option<MessageId> {
-        self.inner.lock().ok().and_then(|mut queue| queue.pop_front())
+        self.inner
+            .lock()
+            .ok()
+            .and_then(|mut queue| queue.pop_front())
     }
 
     pub fn seed(&self, ids: Vec<MessageId>) {
