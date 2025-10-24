@@ -534,7 +534,7 @@ fn translate_reports(raw: Vec<RawReport>) -> Vec<Report> {
     raw.into_iter()
         .map(|report| {
             let report_type: ReportType = report.kind.into();
-            let reason_text = map_reason_description(report_type, report.reason_code);
+            let reason_text = map_reason_description(report_type.clone(), report.reason_code);
             let diagnostic_text = map_diagnostic_description(report.diagnostic_code);
 
             let supplemental = match (reason_text, report.supplemental_info) {

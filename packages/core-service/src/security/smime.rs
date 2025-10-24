@@ -1,12 +1,11 @@
 use crate::config::SmimeConfig;
 use anyhow::{Context, Result};
-use openssl::pkcs7::{Flags, Pkcs7};
+use openssl::pkcs7::{Pkcs7, Pkcs7Flags};
 use openssl::pkey::PKey;
 use openssl::stack::Stack;
 use openssl::symm::Cipher;
 use openssl::x509::{store::X509StoreBuilder, X509};
 use std::fs;
-use std::io::Cursor;
 use std::path::{Path, PathBuf};
 use tracing::{info, warn};
 
@@ -76,15 +75,15 @@ impl SmimeService {
             let _ = load_certificate(&encryption_path)?;
         } else {
             warn!(
-                "S/MIME encryption certificate missing",
-                path = %encryption_path.display()
+                path = %encryption_path.display(),
+                "S/MIME encryption certificate missing"
             );
         }
 
         info!(
-            "S/MIME materials validated",
             signing_cert = %cert_path.display(),
-            signing_key = %key_path.display()
+            signing_key = %key_path.display(),
+            "S/MIME materials validated"
         );
 
         Ok(())
@@ -100,12 +99,12 @@ impl SmimeService {
 
         let (cert_path, _, certificate, private_key) = self.load_signing_material()?;
 
-        let flags = Flags::STREAM | Flags::DETACHED;
+        let flags = Pkcs7Flags::STREAM | Pkcs7Flags::DETACHED;
         let stack = Stack::new()?;
         let pkcs7 = Pkcs7::sign(&certificate, &private_key, &stack, data, flags)
             .context("failed to generate PKCS#7 signature")?;
         let signature = pkcs7.to_der()?;
-        info!("Generated S/MIME signature", cert = %cert_path.display());
+        info!(cert = %cert_path.display(), "Generated S/MIME signature");
         Ok(SmimeResult::completed(SmimeOperation::Sign, signature))
     }
 
@@ -124,10 +123,13 @@ impl SmimeService {
             .push(recipient)
             .context("failed to push recipient certificate")?;
 
-        let pkcs7 = Pkcs7::encrypt(&stack, data, Cipher::aes_256_cbc(), Flags::STREAM)
+        let pkcs7 = Pkcs7::encrypt(&stack, data, Cipher::aes_256_cbc(), Pkcs7Flags::STREAM)
             .context("failed to encrypt payload")?;
         let encrypted = pkcs7.to_der()?;
-        info!("Encrypted message with recipient certificate", cert = %cert_path.display());
+        info!(
+            cert = %cert_path.display(),
+            "Encrypted message with recipient certificate"
+        );
         Ok(SmimeResult::completed(SmimeOperation::Encrypt, encrypted))
     }
 
@@ -142,7 +144,7 @@ impl SmimeService {
         let pkcs7 = match Pkcs7::from_der(signature) {
             Ok(value) => value,
             Err(error) => {
-                warn!("Invalid PKCS#7 signature", error = %error);
+                warn!(error = %error, "Invalid PKCS#7 signature");
                 return Ok(SmimeResult::failed(
                     SmimeOperation::Verify,
                     format!("invalid signature: {error}"),
@@ -150,7 +152,6 @@ impl SmimeService {
             }
         };
 
-        let mut cursor = Cursor::new(payload);
         let mut stack = Stack::new()?;
         let store = X509StoreBuilder::new()?.build();
         // We do not provide additional certificates for now to avoid strict dependency
@@ -159,16 +160,16 @@ impl SmimeService {
         match pkcs7.verify(
             &stack,
             &store,
-            Some(&mut cursor),
+            Some(payload),
             Some(&mut output),
-            Flags::NOVERIFY | Flags::BINARY | Flags::DETACHED,
+            Pkcs7Flags::NOVERIFY | Pkcs7Flags::BINARY | Pkcs7Flags::DETACHED,
         ) {
             Ok(()) => {
                 info!("S/MIME signature structure verified");
                 Ok(SmimeResult::completed(SmimeOperation::Verify, Vec::new()))
             }
             Err(error) => {
-                warn!("S/MIME verification failed", error = %error);
+                warn!(error = %error, "S/MIME verification failed");
                 Ok(SmimeResult::failed(
                     SmimeOperation::Verify,
                     format!("verification failed: {error}"),

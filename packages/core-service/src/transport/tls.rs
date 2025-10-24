@@ -1,5 +1,5 @@
 use crate::config::TransportConfig;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, NaiveDateTime, NaiveTime, Utc};
 use openssl::asn1::Asn1TimeRef;
 use openssl::x509::X509;
 use serde::Serialize;
@@ -218,8 +218,18 @@ fn normalize(value: &str) -> String {
 }
 
 fn not_after(time: &Asn1TimeRef) -> Result<DateTime<Utc>, openssl::error::ErrorStack> {
-    let datetime = time.to_datetime()?;
-    Ok(datetime.with_timezone(&Utc))
+    let tm = time.to_tm()?;
+    let date =
+        NaiveDate::from_ymd_opt(tm.tm_year + 1900, (tm.tm_mon + 1) as u32, tm.tm_mday as u32);
+    let time = NaiveTime::from_hms_opt(tm.tm_hour as u32, tm.tm_min as u32, tm.tm_sec as u32);
+
+    match (date, time) {
+        (Some(date), Some(time)) => {
+            let naive = NaiveDateTime::new(date, time);
+            Ok(DateTime::<Utc>::from_naive_utc_and_offset(naive, Utc))
+        }
+        _ => Err(openssl::error::ErrorStack::get()),
+    }
 }
 
 #[cfg(test)]

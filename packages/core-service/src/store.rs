@@ -239,7 +239,7 @@ async fn apply_sqlcipher_key(pool: &SqlitePool, key: &str) {
     let escaped = sanitized.replace('\'', "''");
     let pragma = format!("PRAGMA key = '{escaped}';");
     if let Err(err) = sqlx::query(&pragma).execute(pool).await {
-        warn!("Unable to apply SQLCipher key", error = %err);
+        warn!(error = %err, "Unable to apply SQLCipher key");
         return;
     }
 
@@ -247,7 +247,7 @@ async fn apply_sqlcipher_key(pool: &SqlitePool, key: &str) {
         .execute(pool)
         .await
     {
-        warn!("Unable to enable SQLCipher memory security", error = %err);
+        warn!(error = %err, "Unable to enable SQLCipher memory security");
     }
 }
 
