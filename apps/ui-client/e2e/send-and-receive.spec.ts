@@ -50,8 +50,14 @@ test.describe('Send and Receive flow', () => {
       return entry.envelope;
     });
 
-    await page.route(`${coreBaseUrl}/**`, async (route, request) => {
-      const url = new URL(request.url());
+    await page.route('**', async (route, request) => {
+      let url: URL;
+      try {
+        url = new URL(request.url());
+      } catch (error) {
+        await route.fallback();
+        return;
+      }
 
       if (request.method() === 'GET' && url.pathname === '/health') {
         await route.fulfill({ json: { status: 'ok' } });
