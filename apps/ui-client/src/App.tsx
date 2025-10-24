@@ -10,7 +10,17 @@ import { useFolders } from './hooks/useFolders';
 import { useMessages } from './hooks/useMessages';
 import { getTransport } from './lib/transport';
 
+import type { Folder } from '@x400/shared';
+
 const DEFAULT_FOLDER = 'inbox';
+
+const FALLBACK_FOLDERS: Folder[] = [
+  { id: 'inbox', name: 'Inbox', unreadCount: 0 },
+  { id: 'outbox', name: 'Outbox', unreadCount: 0 },
+  { id: 'failed', name: 'Failed', unreadCount: 0 },
+  { id: 'archive', name: 'Archive', unreadCount: 0 },
+  { id: 'followUp', name: 'Follow-up', unreadCount: 0 },
+];
 
 const App = () => {
   const [activeFolder, setActiveFolder] = useState(DEFAULT_FOLDER);
@@ -107,20 +117,18 @@ const App = () => {
 
         <main className="grid flex-1 grid-cols-1 gap-4 md:grid-cols-[240px_minmax(300px,400px)_1fr]">
           <section aria-label="Folder list">
-            {foldersLoading ? (
-              <div className="rounded-lg bg-white/70 p-4 text-sm text-slate-500">
-                Loading folders…
-              </div>
-            ) : (
-              <FolderList
-                folders={folders}
-                activeFolder={activeFolder}
-                onSelect={(folder) => {
-                  setActiveFolder(folder);
-                  void reload();
-                }}
-              />
-            )}
+            <FolderList
+              folders={folders.length ? folders : FALLBACK_FOLDERS}
+              activeFolder={activeFolder}
+              onSelect={(folder) => {
+                if (foldersLoading && !folders.length) {
+                  return;
+                }
+                setActiveFolder(folder);
+                void reload();
+              }}
+              disabled={foldersLoading && !folders.length}
+            />
           </section>
 
           <section
