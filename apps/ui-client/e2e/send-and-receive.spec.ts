@@ -59,11 +59,6 @@ test.describe('Send and Receive flow', () => {
         return;
       }
 
-      if (url.port !== corePort) {
-        await route.fallback();
-        return;
-      }
-
       if (request.method() === 'GET' && url.pathname === '/health') {
         await route.fulfill({ json: { status: 'ok' } });
         return;
