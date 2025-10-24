@@ -3,6 +3,7 @@ use anyhow::Context;
 use chrono::Utc;
 use serde_json::json;
 use sqlx::{Row, SqlitePool};
+use std::path::Path;
 use uuid::Uuid;
 
 #[derive(Clone)]
@@ -12,6 +13,7 @@ pub struct StoreManager {
 
 impl StoreManager {
     pub async fn new(database_url: &str) -> anyhow::Result<Self> {
+        ensure_sqlite_parent_exists(database_url).await?;
         let pool = SqlitePool::connect(database_url).await?;
         Ok(Self { pool })
     }
@@ -197,6 +199,19 @@ impl StoreManager {
     }
 }
 
+async fn ensure_sqlite_parent_exists(database_url: &str) -> anyhow::Result<()> {
+    if let Some(path) = database_url.strip_prefix("sqlite://") {
+        if !path.starts_with(':') {
+            let path = Path::new(path);
+            if let Some(parent) = path.parent().filter(|p| !p.as_os_str().is_empty()) {
+                tokio::fs::create_dir_all(parent).await?;
+            }
+        }
+    }
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -205,6 +220,7 @@ mod tests {
         MessageStatus, OrName, X400Address,
     };
     use chrono::Utc;
+    use tempfile::tempdir;
     use uuid::Uuid;
 
     fn sample_message(folder: &str, subject: &str) -> Message {
@@ -289,5 +305,23 @@ mod tests {
 
         let results = store.search_messages("FTS").await.unwrap();
         assert_eq!(results.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn ensure_parent_directory_is_created_for_file_urls() {
+        let temp = tempdir().unwrap();
+        let db_path = temp.path().join("nested").join("db.sqlite");
+        let url = format!("sqlite://{}", db_path.display());
+
+        ensure_sqlite_parent_exists(&url).await.unwrap();
+
+        assert!(db_path.parent().unwrap().exists());
+    }
+
+    #[tokio::test]
+    async fn ensure_parent_directory_ignores_memory_urls() {
+        ensure_sqlite_parent_exists("sqlite::memory:")
+            .await
+            .expect("memory URLs should not fail");
     }
 }
