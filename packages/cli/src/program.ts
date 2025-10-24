@@ -1,22 +1,28 @@
-import { createMockTransport, type TransportFactory } from '@x400/sdk-wrapper';
+import {
+  createTransport as createSdkAwareTransport,
+  type TransportFactory,
+} from '@x400/sdk-wrapper';
 import { ENV } from '@x400/shared';
 import { Command } from 'commander';
 import { green, yellow } from 'kleur/colors';
 
 import { parseOrAddress, parseOrAddresses } from './utils';
 
-type GlobalOptions = { baseUrl: string };
+type GlobalOptions = { baseUrl: string; profile: string; tlsVerify: boolean; mock: boolean };
 
 type TransportInstance = ReturnType<TransportFactory>;
 
-type Handler<T> = (transport: TransportInstance) => Promise<T>;
+type Handler<T> = (context: {
+  transport: TransportInstance;
+  session: Awaited<ReturnType<TransportInstance['connect']>>;
+}) => Promise<T>;
 
 type ProgramFactoryOptions = {
   createTransport?: TransportFactory;
 };
 
 export const buildProgram = ({
-  createTransport = createMockTransport,
+  createTransport: factory = createSdkAwareTransport,
 }: ProgramFactoryOptions = {}) => {
   const program = new Command();
 
@@ -26,12 +32,18 @@ export const buildProgram = ({
     .name('x400-cli')
     .description('Modern replacement for FW_SI.EXE interacting with the local X.400 IPC service')
     .version('0.1.0')
-    .option('--base-url <url>', 'Base URL of the local IPC endpoint', defaultBaseUrl);
+    .option('--base-url <url>', 'Base URL of the local IPC endpoint', defaultBaseUrl)
+    .option('--profile <name>', 'Connection profile name', ENV.CLI_DEFAULT_PROFILE)
+    .option('--tls-verify', 'Fail if TLS validation reports issues', false)
+    .option('--mock', 'Force mock transport even if SDK mode is enabled', false);
 
   const withTransport = async <T>(options: GlobalOptions, handler: Handler<T>) => {
-    const transport = createTransport({ baseUrl: options.baseUrl });
-    await transport.connect();
-    return handler(transport);
+    const transport = factory({
+      baseUrl: options.baseUrl,
+      mode: options.mock ? 'mock' : undefined,
+    });
+    const session = await transport.connect();
+    return handler({ transport, session });
   };
 
   program
@@ -62,7 +74,7 @@ export const buildProgram = ({
     .option('--folders', 'List all folders instead of folder contents')
     .action(async (cmdOptions) => {
       const options = program.opts<GlobalOptions>();
-      await withTransport(options, async (transport) => {
+      await withTransport(options, async ({ transport }) => {
         if (cmdOptions.folders) {
           const folders = await transport.folders.listFolders();
           console.log(JSON.stringify(folders, null, 2));
@@ -80,7 +92,7 @@ export const buildProgram = ({
     .requiredOption('-i, --id <messageId>', 'Message identifier')
     .action(async (cmdOptions) => {
       const options = program.opts<GlobalOptions>();
-      await withTransport(options, async (transport) => {
+      await withTransport(options, async ({ transport }) => {
         const message = await transport.messages.getMessage(cmdOptions.id);
         console.log(JSON.stringify(message, null, 2));
       });
@@ -95,7 +107,7 @@ export const buildProgram = ({
     .option('--body <body>', 'Body text', 'This is a mock submission via the CLI.')
     .action(async (cmdOptions) => {
       const options = program.opts<GlobalOptions>();
-      await withTransport(options, async (transport) => {
+      await withTransport(options, async ({ transport }) => {
         const result = await transport.compose({
           sender: parseOrAddress(cmdOptions.from),
           recipients: parseOrAddresses(cmdOptions.to),
@@ -114,7 +126,7 @@ export const buildProgram = ({
     .requiredOption('-i, --id <messageId>', 'Message identifier')
     .action(async (cmdOptions) => {
       const options = program.opts<GlobalOptions>();
-      await withTransport(options, async (transport) => {
+      await withTransport(options, async ({ transport }) => {
         await transport.messages.deleteMessage(cmdOptions.id);
         console.log(green(`Message ${cmdOptions.id} removed`));
       });
@@ -127,7 +139,7 @@ export const buildProgram = ({
     .requiredOption('-f, --folder <folderId>', 'Target folder')
     .action(async (cmdOptions) => {
       const options = program.opts<GlobalOptions>();
-      await withTransport(options, async (transport) => {
+      await withTransport(options, async ({ transport }) => {
         await transport.messages.moveMessage(cmdOptions.id, cmdOptions.folder);
         console.log(green(`Message ${cmdOptions.id} moved to ${cmdOptions.folder}`));
       });
@@ -139,7 +151,7 @@ export const buildProgram = ({
     .requiredOption('-i, --id <messageId>', 'Message identifier')
     .action(async (cmdOptions) => {
       const options = program.opts<GlobalOptions>();
-      await withTransport(options, async (transport) => {
+      await withTransport(options, async ({ transport }) => {
         await transport.messages.archiveMessage(cmdOptions.id);
         console.log(green(`Message ${cmdOptions.id} archived`));
       });
@@ -154,7 +166,7 @@ export const buildProgram = ({
       const timeout = Number.parseInt(cmdOptions.timeout, 10) * 1000;
       const deadline = Date.now() + timeout;
 
-      await withTransport(options, async (transport) => {
+      await withTransport(options, async ({ transport }) => {
         while (Date.now() < deadline) {
           const queued = await transport.messages.listMessages('outbox');
           if (queued.length === 0) {
@@ -176,7 +188,7 @@ export const buildProgram = ({
     .requiredOption('-i, --id <messageId>', 'Message identifier')
     .action(async (cmdOptions) => {
       const options = program.opts<GlobalOptions>();
-      await withTransport(options, async (transport) => {
+      await withTransport(options, async ({ transport }) => {
         const message = await transport.messages.getMessage(cmdOptions.id);
         console.log(
           JSON.stringify(
@@ -186,6 +198,82 @@ export const buildProgram = ({
               status: message.envelope.status,
               folder: message.envelope.folder,
               recipientCount: message.envelope.to.length,
+            },
+            null,
+            2,
+          ),
+        );
+      });
+    });
+
+  program
+    .command('bind-test')
+    .description('Verify SDK connectivity and transport readiness for the active profile')
+    .action(async () => {
+      const options = program.opts<GlobalOptions>();
+      await withTransport(options, async ({ transport, session }) => {
+        const status = await transport.status();
+        console.log(
+          JSON.stringify(
+            {
+              session,
+              status,
+              profile: options.profile,
+            },
+            null,
+            2,
+          ),
+        );
+      });
+    });
+
+  program
+    .command('submit')
+    .description('Submit a message using the configured transport mode')
+    .requiredOption('--from <address>', 'Originator address in O/R format (e.g. C=DE;O=Org;S=User)')
+    .option('--to <address...>', 'Recipient addresses in O/R format', [])
+    .option('--subject <subject>', 'Subject line', 'Modernized message')
+    .option('--body <body>', 'Body text', 'This is a transport submission.')
+    .action(async (cmdOptions) => {
+      const options = program.opts<GlobalOptions>();
+      await withTransport(options, async ({ transport }) => {
+        const result = await transport.compose({
+          sender: parseOrAddress(cmdOptions.from),
+          recipients: parseOrAddresses(cmdOptions.to),
+          subject: cmdOptions.subject,
+          body: cmdOptions.body,
+        });
+
+        console.log(green('Message submitted successfully via transport'));
+        console.log(JSON.stringify(result, null, 2));
+      });
+    });
+
+  program
+    .command('health')
+    .description('Inspect transport mode, TLS configuration, and S/MIME status')
+    .action(async () => {
+      const options = program.opts<GlobalOptions>();
+      await withTransport(options, async ({ transport, session }) => {
+        const status = await transport.status();
+        if (options.tlsVerify && status.tls.enabled) {
+          if (!status.tls.fingerprintMatches || status.tls.error) {
+            throw new Error(`TLS validation failed: ${status.tls.error ?? 'fingerprint mismatch'}`);
+          }
+        }
+
+        if (status.tls.warnings.length > 0) {
+          status.tls.warnings.forEach((warning) => {
+            console.warn(yellow(`TLS warning: ${warning}`));
+          });
+        }
+
+        console.log(
+          JSON.stringify(
+            {
+              session,
+              status,
+              profile: options.profile,
             },
             null,
             2,

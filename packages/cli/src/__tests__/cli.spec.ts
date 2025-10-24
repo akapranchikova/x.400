@@ -46,6 +46,18 @@ const createTransportMock = () => {
       queueReference: `queue://outbox/${message.envelope.id}`,
       status: 'queued',
     }),
+    status: vi.fn().mockResolvedValue({
+      transportMode: 'mock' as const,
+      tls: {
+        enabled: false,
+        minVersion: 'TLS1_3',
+        fingerprintMatches: true,
+        ocspResponderConfigured: false,
+        revocationChecked: false,
+        warnings: [],
+      },
+      smimeEnabled: false,
+    }),
   };
 
   return { transport, message } as const;
@@ -185,8 +197,9 @@ describe('CLI program', () => {
         return actual;
       });
       sharedModule = await importShared();
+      const { transport } = createTransportMock();
       const { buildProgram } = await import('../program');
-      const program = buildProgram().exitOverride();
+      const program = buildProgram({ createTransport: () => transport }).exitOverride();
 
       await program.parseAsync(['env', '--json'], { from: 'user' });
 
@@ -220,5 +233,16 @@ describe('CLI program', () => {
         process.env.X400_MODE = originalMode;
       }
     }
+  });
+
+  it('performs bind-test and reports status', async () => {
+    const { transport } = createTransportMock();
+    const { buildProgram } = await import('../program');
+    const program = buildProgram({ createTransport: () => transport }).exitOverride();
+
+    await program.parseAsync(['bind-test'], { from: 'user' });
+
+    expect(transport.status).toHaveBeenCalledTimes(1);
+    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('"status"'));
   });
 });

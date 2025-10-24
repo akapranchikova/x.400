@@ -4,11 +4,11 @@ The roadmap tracks modernization milestones and highlights dependencies, risks, 
 
 ## Release phases
 
-| Release | Objectives | Status |
-| --- | --- | --- |
-| MVP | Mock transport, SQLite persistence, CLI verbs, docs site | ✅ |
-| Parity | Vendor SDK integration, SQLCipher, migration tooling | 🚧 |
-| Extensions | Real-time events, policy engine, observability | ⏳ |
+| Release    | Objectives                                               | Status |
+| ---------- | -------------------------------------------------------- | ------ |
+| MVP        | Mock transport, SQLite persistence, CLI verbs, docs site | ✅     |
+| Parity     | Vendor SDK integration, SQLCipher, migration tooling     | 🚧     |
+| Extensions | Real-time events, policy engine, observability           | ⏳     |
 
 ## Milestones
 
@@ -22,8 +22,8 @@ The roadmap tracks modernization milestones and highlights dependencies, risks, 
 
 ### Parity (Active)
 
-- 🚧 Integrate vendor X.400 SDK via FFI bindings in `packages/sdk-wrapper`
-- 🚧 Harden SQLite with SQLCipher, leveraging OS keychains for key retrieval
+- ✅ Integrate vendor X.400 SDK via FFI bindings in `packages/sdk-wrapper`
+- ✅ Harden SQLite with SQLCipher, leveraging OS keychains for key retrieval
 - 🚧 Build FWM/FWZ import pipeline (UI wizard + CLI support)
 - 🚧 Expand automated tests: Vitest component tests, cargo integration tests
 
@@ -35,12 +35,12 @@ The roadmap tracks modernization milestones and highlights dependencies, risks, 
 
 ## Risks & Mitigations
 
-| Risk | Impact | Mitigation |
-| --- | --- | --- |
-| Vendor SDK licensing or availability delays | High | Mock transport keeps development unblocked; engage vendor early | 
-| SQLCipher performance overhead | Medium | Benchmark with representative datasets, tune pragmas, provide feature flags |
-| Code-signing certificate procurement | Medium | Document platform-specific processes, automate signing in CI |
-| Migration data quality issues | Medium | Provide dry-run mode, generate detailed reports, validate with shared schemas |
+| Risk                                        | Impact | Mitigation                                                                    |
+| ------------------------------------------- | ------ | ----------------------------------------------------------------------------- |
+| Vendor SDK licensing or availability delays | High   | Mock transport keeps development unblocked; engage vendor early               |
+| SQLCipher performance overhead              | Medium | Benchmark with representative datasets, tune pragmas, provide feature flags   |
+| Code-signing certificate procurement        | Medium | Document platform-specific processes, automate signing in CI                  |
+| Migration data quality issues               | Medium | Provide dry-run mode, generate detailed reports, validate with shared schemas |
 
 ## Next review
 

@@ -90,4 +90,25 @@ describe('createMockTransport', () => {
 
     await expect(transport.messages.submitMessage(envelope, 'content')).rejects.toThrow();
   });
+
+  it('exposes service status information', async () => {
+    nock(BASE_URL)
+      .get('/status')
+      .reply(200, {
+        transport_mode: 'sdk',
+        smime_enabled: true,
+        tls: {
+          enabled: true,
+          min_version: 'TLS1_3',
+          fingerprint: 'AA:BB',
+          fingerprint_matches: true,
+        },
+      });
+
+    const transport = createMockTransport({ baseUrl: BASE_URL });
+    const status = await transport.status();
+    expect(status.transportMode).toBe('sdk');
+    expect(status.tls.enabled).toBe(true);
+    expect(status.smimeEnabled).toBe(true);
+  });
 });

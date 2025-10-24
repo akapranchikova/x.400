@@ -4,15 +4,24 @@ Security is fundamental to the modernization effort. Although the current implem
 
 ## TLS policy
 
-- IPC endpoints are configured to require **TLS 1.3** when exposed beyond localhost. The configuration file (`packages/core-service/config/default.toml`) includes certificate and key paths plus the option to enforce mutual TLS.
+- IPC endpoints are configured to require **TLS 1.3** when exposed beyond localhost. The configuration file (`packages/core-service/config/default.toml`) includes certificate chains, client identities, and fingerprint pinning.
+- The `[transport.sdk]` block declares the SDK library path and default profile. Operators may override values via `X400_SDK_LIBRARY` and `X400_SDK_PROFILE` without editing configuration files.
+- `transport.mode = "sdk"` triggers runtime validation: certificates are parsed for expiry, fingerprints are matched against the configured pinset, and OCSP placeholders enable future revocation checks.
+- When an OCSP responder URL is configured the service surfaces a warning in `/status` until online revocation checks ship, ensuring operators understand the current coverage.
 - Development mode runs on plain HTTP with explicit warnings in the logs and UI. Production builds must provide real certificates and, where required, client authentication trust stores.
 - The Tauri build process contains placeholders for Windows EV code-signing certificates and macOS Developer ID identities. These must be supplied through secure CI secrets before shipping binaries.
 
 ## Data protection
 
-- Storage uses SQLite today but is compatible with **SQLCipher**. Configuration files contain guidance on enabling encryption and retrieving keys from OS keychains (DPAPI, macOS Keychain, libsecret).
+- Storage uses SQLite today but transparently enables **SQLCipher** when `database.use_sqlcipher = true`. Keys are resolved from OS keychains (DPAPI, macOS Keychain, Secret Service) with the option to fall back to environment variables for CI.
 - Attachments and trace bundles are stored outside the repository with UUID-based directory structures to reduce accidental leakage. Backups should be encrypted and rotated according to enterprise policies.
 - Secrets (SQLCipher keys, API tokens) must never be committed to the repository. Use environment variables, key management services, or OS keychains.
+
+## S/MIME
+
+- Certificates reside under `profiles/certs/` with defaults for signing and encryption. The core service signs outgoing messages and verifies incoming payloads when certificates are available.
+- Verification results are exposed through the `/status` endpoint and surfaced in the CLI (`health`, `bind-test`) and UI status bar.
+- Certificate and key distribution must follow organisational PKI policy; private keys should be deployed via secure secrets management rather than static files.
 
 ## Logging and observability
 

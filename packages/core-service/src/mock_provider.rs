@@ -1,10 +1,9 @@
-use crate::models::{Message, MessageStatus};
+use crate::models::{Message, MessageId, MessageStatus};
 use crate::queue::QueueManager;
 use crate::store::StoreManager;
 use crate::trace::TraceManager;
-use serde_json::json;
-use tokio::time::{sleep, Duration};
 
+/// In-memory delivery provider used to simulate message transitions.
 #[derive(Clone)]
 pub struct MockDeliveryProvider {
     queue: QueueManager,
@@ -21,42 +20,18 @@ impl MockDeliveryProvider {
         }
     }
 
-    pub async fn dispatch(&self, message: Message) -> anyhow::Result<()> {
-        self.store.save_message(&message).await?;
-        self.queue.enqueue(message.envelope.clone()).await;
+    pub fn dispatch(&self, message: Message) -> MessageId {
+        let id = message.envelope.id.clone();
+        self.trace.record("mock.accepted", id.clone());
+        self.store.save(message);
+        self.queue.enqueue(id.clone());
 
-        let queue = self.queue.clone();
-        let store = self.store.clone();
-        let trace = self.trace.clone();
-        let message_id = message.envelope.id;
+        self.store.update_status(&id, MessageStatus::Delivered);
+        self.trace.record("mock.delivered", id.clone());
 
-        tokio::spawn(async move {
-            sleep(Duration::from_millis(100)).await;
-            let _ = queue.move_message(message_id, "inbox").await;
-            if let Ok(mut stored) = store.get_message(message_id).await {
-                stored.envelope.status = MessageStatus::Delivered;
-                let _ = store.save_message(&stored).await;
-            }
-            trace
-                .record(
-                    "mock.delivery",
-                    json!({ "messageId": message_id, "status": "delivered" }),
-                )
-                .await;
+        self.store.update_status(&id, MessageStatus::Read);
+        self.trace.record("mock.read", id.clone());
 
-            sleep(Duration::from_millis(150)).await;
-            if let Ok(mut stored) = store.get_message(message_id).await {
-                stored.envelope.status = MessageStatus::Read;
-                let _ = store.save_message(&stored).await;
-            }
-            trace
-                .record(
-                    "mock.read",
-                    json!({ "messageId": message_id, "status": "read" }),
-                )
-                .await;
-        });
-
-        Ok(())
+        id
     }
 }

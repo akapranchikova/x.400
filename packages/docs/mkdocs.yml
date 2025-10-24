@@ -10,6 +10,7 @@ nav:
   - Environment: docs/environment.md
   - Architecture: docs/architecture.md
   - Transport Layer: docs/transport-layer.md
+  - SDK Transport Integration: docs/transport-sdk.md
   - Store & Data Model: docs/store-data-model.md
   - CLI Reference (FW_SI compatibility): docs/cli-reference.md
   - Testing Guide: docs/testing.md

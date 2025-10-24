@@ -1,4 +1,4 @@
-import { createMockTransport } from '@x400/sdk-wrapper';
+import { createTransport } from '@x400/sdk-wrapper';
 
 type MetaEnv = {
   [key: string]: string | boolean | undefined;
@@ -29,12 +29,12 @@ export const resolveIpcBaseUrl = () => {
   return `${scheme}://${host}:${port}`;
 };
 
-let transportInstance = createMockTransport({ baseUrl: resolveIpcBaseUrl() });
+let transportInstance = createTransport({ baseUrl: resolveIpcBaseUrl() });
 
 export const getTransport = () => transportInstance;
 
 export const reconnectTransport = async () => {
-  transportInstance = createMockTransport({ baseUrl: resolveIpcBaseUrl() });
+  transportInstance = createTransport({ baseUrl: resolveIpcBaseUrl() });
   await transportInstance.connect();
   return transportInstance;
 };
