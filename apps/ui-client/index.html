@@ -22,7 +22,51 @@
 
           <main class="grid flex-1 grid-cols-1 gap-4 md:grid-cols-[240px_minmax(300px,400px)_1fr]">
             <section aria-label="Folder list">
-              <div class="rounded-lg bg-white/70 p-4 text-sm text-slate-500">Loading folders…</div>
+              <nav
+                aria-label="Folders"
+                class="flex flex-col gap-2 rounded-lg bg-white/70 p-4 shadow-sm backdrop-blur"
+              >
+                <button
+                  type="button"
+                  class="flex items-center justify-between rounded-md bg-blue-600 px-3 py-2 text-left font-medium text-white shadow"
+                  disabled
+                >
+                  <span class="font-medium">Inbox</span>
+                  <span class="rounded-full bg-slate-200 px-2 py-0.5 text-xs text-slate-600">0</span>
+                </button>
+                <button
+                  type="button"
+                  class="flex items-center justify-between rounded-md bg-white px-3 py-2 text-left text-slate-700 opacity-60"
+                  disabled
+                >
+                  <span class="font-medium">Outbox</span>
+                  <span class="rounded-full bg-slate-200 px-2 py-0.5 text-xs text-slate-600">0</span>
+                </button>
+                <button
+                  type="button"
+                  class="flex items-center justify-between rounded-md bg-white px-3 py-2 text-left text-slate-700 opacity-60"
+                  disabled
+                >
+                  <span class="font-medium">Failed</span>
+                  <span class="rounded-full bg-slate-200 px-2 py-0.5 text-xs text-slate-600">0</span>
+                </button>
+                <button
+                  type="button"
+                  class="flex items-center justify-between rounded-md bg-white px-3 py-2 text-left text-slate-700 opacity-60"
+                  disabled
+                >
+                  <span class="font-medium">Archive</span>
+                  <span class="rounded-full bg-slate-200 px-2 py-0.5 text-xs text-slate-600">0</span>
+                </button>
+                <button
+                  type="button"
+                  class="flex items-center justify-between rounded-md bg-white px-3 py-2 text-left text-slate-700 opacity-60"
+                  disabled
+                >
+                  <span class="font-medium">Follow-up</span>
+                  <span class="rounded-full bg-slate-200 px-2 py-0.5 text-xs text-slate-600">0</span>
+                </button>
+              </nav>
             </section>
 
             <section class="flex flex-col overflow-hidden rounded-lg bg-white/80 shadow" aria-label="Message list">

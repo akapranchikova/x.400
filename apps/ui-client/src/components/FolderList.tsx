@@ -6,6 +6,7 @@ interface FolderListProps {
   folders: Folder[];
   activeFolder: string;
   onSelect: (folder: string) => void;
+  disabled?: boolean;
 }
 
 const folderNames: Record<string, string> = {
@@ -16,7 +17,12 @@ const folderNames: Record<string, string> = {
   followUp: 'Follow-up',
 };
 
-export const FolderList = ({ folders, activeFolder, onSelect }: FolderListProps) => {
+export const FolderList = ({
+  folders,
+  activeFolder,
+  onSelect,
+  disabled = false,
+}: FolderListProps) => {
   return (
     <nav
       aria-label="Folders"
@@ -31,8 +37,16 @@ export const FolderList = ({ folders, activeFolder, onSelect }: FolderListProps)
             activeFolder === folder.id
               ? 'bg-blue-600 text-white shadow'
               : 'bg-white text-slate-700 hover:bg-blue-50',
+            disabled && 'cursor-not-allowed opacity-60 hover:bg-white',
           )}
-          onClick={() => onSelect(folder.id)}
+          onClick={() => {
+            if (disabled) {
+              return;
+            }
+            onSelect(folder.id);
+          }}
+          disabled={disabled}
+          aria-disabled={disabled}
         >
           <span className="font-medium">{folderNames[folder.id] ?? folder.name}</span>
           <span className="text-xs rounded-full bg-slate-200 px-2 py-0.5 text-slate-600">
