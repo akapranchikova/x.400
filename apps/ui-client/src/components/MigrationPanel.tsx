@@ -1,8 +1,8 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 
-import type { MigrationProgress, MigrationReport } from '@x400/shared';
-
 import { getTransport } from '../lib/transport';
+
+import type { MigrationProgress, MigrationReport } from '@x400/shared';
 
 type MigrationMode = 'auto' | 'fwm' | 'fwz';
 

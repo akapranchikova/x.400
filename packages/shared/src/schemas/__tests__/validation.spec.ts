@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
-
 import { randomUUID } from 'crypto';
+
+import { describe, expect, it } from 'vitest';
 
 import {
   messageSchema,
