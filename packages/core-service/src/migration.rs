@@ -6,7 +6,6 @@ use std::sync::{Arc, Mutex};
 
 use chardetng::EncodingDetector;
 use chrono::{DateTime, Utc};
-use encoding_rs::Encoding;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use thiserror::Error;
@@ -14,7 +13,6 @@ use uuid::Uuid;
 use walkdir::WalkDir;
 use zip::read::ZipArchive;
 
-use crate::config::AppConfig;
 use crate::models::{
     Address, Message, MessageContent, MessageEnvelope, MessagePriority, MessageSensitivity,
     MessageStatus,
@@ -45,7 +43,7 @@ pub struct FwmDocument {
 }
 
 impl FwmDocument {
-    fn subject(&self) -> String {
+    pub fn subject(&self) -> String {
         self.values
             .get("SUBJECT")
             .or_else(|| self.values.get("Subject"))
@@ -53,7 +51,7 @@ impl FwmDocument {
             .unwrap_or_else(|| "Legacy message".to_string())
     }
 
-    fn body(&self) -> String {
+    pub fn body(&self) -> String {
         self.values
             .get("BODY")
             .or_else(|| self.values.get("Body"))
@@ -61,7 +59,7 @@ impl FwmDocument {
             .unwrap_or_default()
     }
 
-    fn folder(&self) -> String {
+    pub fn folder(&self) -> String {
         self.values
             .get("FOLDER")
             .or_else(|| self.values.get("Folder"))
@@ -69,7 +67,7 @@ impl FwmDocument {
             .unwrap_or_else(|| "inbox".to_string())
     }
 
-    fn created_at(&self) -> Option<DateTime<Utc>> {
+    pub fn created_at(&self) -> Option<DateTime<Utc>> {
         let value = self
             .values
             .get("CREATED_AT")
@@ -81,7 +79,7 @@ impl FwmDocument {
             .or_else(|| DateTime::parse_from_str(&value, "%Y%m%d%H%M%S").ok().map(|dt| dt.with_timezone(&Utc)))
     }
 
-    fn status(&self) -> MessageStatus {
+    pub fn status(&self) -> MessageStatus {
         let raw = self
             .values
             .get("STATUS")
@@ -95,17 +93,11 @@ impl FwmDocument {
             "READ" | "OPENED" => MessageStatus::Read,
             "FAILED" | "NDR" => MessageStatus::Failed,
             "QUEUED" => MessageStatus::Queued,
-            other => {
-                if other == "UNKNOWN" {
-                    MessageStatus::Unknown
-                } else {
-                    MessageStatus::Unknown
-                }
-            }
+            _ => MessageStatus::Unknown,
         }
     }
 
-    fn sender(&self) -> Address {
+    pub fn sender(&self) -> Address {
         self.values
             .get("SENDER")
             .or_else(|| self.values.get("FROM"))
@@ -113,7 +105,7 @@ impl FwmDocument {
             .unwrap_or_else(Address::sample)
     }
 
-    fn recipients(&self) -> Vec<Address> {
+    pub fn recipients(&self) -> Vec<Address> {
         let list = self
             .values
             .get("RECIPIENTS")
@@ -122,7 +114,7 @@ impl FwmDocument {
             .unwrap_or_default();
 
         let mut recipients = list
-            .split(';')
+            .split(|c| matches!(c, '\n' | '|' | ','))
             .map(str::trim)
             .filter(|entry| !entry.is_empty())
             .filter_map(parse_address)
@@ -273,18 +265,13 @@ pub fn read_fwz(path: &Path) -> Result<FwzArchive, MigrationError> {
 }
 
 /// Accepted migration modes.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum MigrationMode {
+    #[default]
     Auto,
     Fwm,
     Fwz,
-}
-
-impl Default for MigrationMode {
-    fn default() -> Self {
-        MigrationMode::Auto
-    }
 }
 
 /// Request parameters for launching a migration job.
@@ -342,19 +329,14 @@ pub struct MigrationErrorRecord {
 }
 
 /// Job status values exposed externally.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum MigrationStatus {
+    #[default]
     Pending,
     Running,
     Completed,
     Failed,
-}
-
-impl Default for MigrationStatus {
-    fn default() -> Self {
-        MigrationStatus::Pending
-    }
 }
 
 struct MigrationJob {
@@ -367,15 +349,13 @@ struct MigrationJob {
 #[derive(Clone)]
 pub struct MigrationManager {
     store: StoreManager,
-    config: Arc<AppConfig>,
     jobs: Arc<Mutex<HashMap<Uuid, MigrationJob>>>,
 }
 
 impl MigrationManager {
-    pub fn new(store: StoreManager, config: Arc<AppConfig>) -> Self {
+    pub fn new(store: StoreManager) -> Self {
         Self {
             store,
-            config,
             jobs: Arc::new(Mutex::new(HashMap::new())),
         }
     }
@@ -391,7 +371,7 @@ impl MigrationManager {
 
         let job_id = Uuid::new_v4();
         let started_at = Utc::now();
-        let mut job = MigrationJob {
+        let job = MigrationJob {
             request: request.clone(),
             progress: MigrationProgress {
                 job_id,

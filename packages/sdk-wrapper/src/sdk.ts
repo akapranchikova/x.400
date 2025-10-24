@@ -1,5 +1,6 @@
-import type { IX400Transport, TransportFactory, TransportOptions } from './interfaces';
 import { createMockTransport } from './mock';
+
+import type { IX400Transport, TransportFactory, TransportOptions } from './interfaces';
 
 const DEFAULT_RETRIES = 2;
 const DEFAULT_DELAY_MS = 250;
@@ -67,6 +68,11 @@ export const createSdkTransport: TransportFactory = (options: TransportOptions =
     },
     trace: {
       bundle: wrap(base.trace.bundle, retries, delayMs),
+    },
+    migration: {
+      import: wrap(base.migration.import, retries, delayMs),
+      progress: wrap(base.migration.progress, retries, delayMs),
+      report: wrap(base.migration.report, retries, delayMs),
     },
     compose: wrap(base.compose, retries, delayMs),
     status: wrap(base.status, retries, delayMs),

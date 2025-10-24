@@ -28,7 +28,7 @@ impl AppState {
         let store = StoreManager::new();
         let trace = TraceManager::new();
         let config = Arc::new(config);
-        let migration = migration::MigrationManager::new(store.clone(), Arc::clone(&config));
+        let migration = migration::MigrationManager::new(store.clone());
 
         Self {
             queue,

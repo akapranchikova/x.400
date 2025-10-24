@@ -1,6 +1,7 @@
-import type { TransportFactory, TransportOptions } from './interfaces';
 import { createMockTransport } from './mock';
 import { createSdkTransport } from './sdk';
+
+import type { TransportFactory, TransportOptions } from './interfaces';
 
 export * from './interfaces';
 export * from './mock';

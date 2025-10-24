@@ -3,8 +3,6 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use chrono::{Duration, Utc};
-use std::sync::Arc;
-use core_service::config::AppConfig;
 use core_service::migration::{
     parse_fwm, read_fwz, MigrationManager, MigrationMode, MigrationRequest,
 };
@@ -21,7 +19,7 @@ fn write_fwz(base: &Path, entries: &[(&str, &[u8])]) -> PathBuf {
 
     for (name, data) in entries {
         writer
-            .start_file(name, FileOptions::default().compression_method(CompressionMethod::Stored))
+            .start_file(*name, FileOptions::default().compression_method(CompressionMethod::Stored))
             .expect("start file");
         writer.write_all(data).expect("write entry");
     }
@@ -56,14 +54,14 @@ fn read_fwz_extracts_documents_and_attachments() {
 fn migration_manager_imports_documents_and_tracks_progress() {
     let dir = tempdir().expect("temp dir");
     let file_path = dir.path().join("message.fwm");
-    fs::write(
-        &file_path,
-        b"SUBJECT=Test Import\nBODY=Hello\nTO=C=DE;O=Org;S=User\nSTATUS=DELIVERED\nCREATED_AT=2024-01-02T03:04:05Z\n",
-    )
-    .expect("write fwm");
+    let created_at = Utc::now().to_rfc3339();
+    let payload = format!(
+        "SUBJECT=Test Import\nBODY=Hello\nTO=C=DE;O=Org;S=User\nSTATUS=DELIVERED\nCREATED_AT={created_at}\n",
+    );
+    fs::write(&file_path, payload).expect("write fwm");
 
     let store = StoreManager::new();
-    let manager = MigrationManager::new(store.clone(), Arc::new(AppConfig::default()));
+    let manager = MigrationManager::new(store.clone());
 
     let job_id = manager
         .import(MigrationRequest {

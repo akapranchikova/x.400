@@ -1,18 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import type { IServiceStatus } from '@x400/sdk-wrapper';
-
 import { ComposeDialog } from './components/ComposeDialog';
 import { FolderList } from './components/FolderList';
 import { MessageDetail } from './components/MessageDetail';
-import { MigrationPanel } from './components/MigrationPanel';
 import { MessageList } from './components/MessageList';
+import { MigrationPanel } from './components/MigrationPanel';
 import { SettingsPanel } from './components/SettingsPanel';
 import { StatusBar } from './components/StatusBar';
 import { useFolders } from './hooks/useFolders';
 import { useMessages } from './hooks/useMessages';
 import { getTransport } from './lib/transport';
 
+import type { IServiceStatus } from '@x400/sdk-wrapper';
 import type { Folder } from '@x400/shared';
 
 const DEFAULT_FOLDER = 'inbox';
