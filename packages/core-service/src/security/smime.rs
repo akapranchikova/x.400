@@ -118,7 +118,7 @@ impl SmimeService {
 
         let cert_path = self.default_encryption_cert_path()?;
         let recipient = load_certificate(&cert_path)?;
-        let mut stack = Stack::new()?;
+        let stack = Stack::new()?;
         stack
             .push(recipient)
             .context("failed to push recipient certificate")?;

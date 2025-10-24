@@ -218,7 +218,7 @@ fn normalize(value: &str) -> String {
 }
 
 fn not_after(time: &Asn1TimeRef) -> Result<DateTime<Utc>, openssl::error::ErrorStack> {
-    let tm = time.to_tm()?;
+    let tm = time.to_owned().to_tm()?;
     let date =
         NaiveDate::from_ymd_opt(tm.tm_year + 1900, (tm.tm_mon + 1) as u32, tm.tm_mday as u32);
     let time = NaiveTime::from_hms_opt(tm.tm_hour as u32, tm.tm_min as u32, tm.tm_sec as u32);
