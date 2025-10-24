@@ -114,7 +114,7 @@ impl FwmDocument {
             .unwrap_or_default();
 
         let mut recipients = list
-            .split(|c| matches!(c, '\n' | '|' | ','))
+            .split(['\n', '|', ','])
             .map(str::trim)
             .filter(|entry| !entry.is_empty())
             .filter_map(parse_address)
