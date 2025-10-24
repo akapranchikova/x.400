@@ -14,3 +14,5 @@ apps/ui-client/src-tauri/target
 /data/*
 /traces/*
 /certs/*
+
+.turbo

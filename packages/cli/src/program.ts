@@ -12,10 +12,10 @@ type GlobalOptions = { baseUrl: string; profile: string; tlsVerify: boolean; moc
 
 type TransportInstance = ReturnType<TransportFactory>;
 
-type Handler<T> = (
-  transport: TransportInstance,
-  session: Awaited<ReturnType<TransportInstance['connect']>>,
-) => Promise<T>;
+type Handler<T> = (context: {
+  transport: TransportInstance;
+  session: Awaited<ReturnType<TransportInstance['connect']>>;
+}) => Promise<T>;
 
 type ProgramFactoryOptions = {
   createTransport?: TransportFactory;
@@ -43,7 +43,7 @@ export const buildProgram = ({
       mode: options.mock ? 'mock' : undefined,
     });
     const session = await transport.connect();
-    return handler(transport, session);
+    return handler({ transport, session });
   };
 
   program
@@ -74,7 +74,7 @@ export const buildProgram = ({
     .option('--folders', 'List all folders instead of folder contents')
     .action(async (cmdOptions) => {
       const options = program.opts<GlobalOptions>();
-      await withTransport(options, async (transport, _session) => {
+      await withTransport(options, async ({ transport }) => {
         if (cmdOptions.folders) {
           const folders = await transport.folders.listFolders();
           console.log(JSON.stringify(folders, null, 2));
@@ -92,7 +92,7 @@ export const buildProgram = ({
     .requiredOption('-i, --id <messageId>', 'Message identifier')
     .action(async (cmdOptions) => {
       const options = program.opts<GlobalOptions>();
-      await withTransport(options, async (transport, _session) => {
+      await withTransport(options, async ({ transport }) => {
         const message = await transport.messages.getMessage(cmdOptions.id);
         console.log(JSON.stringify(message, null, 2));
       });
@@ -107,7 +107,7 @@ export const buildProgram = ({
     .option('--body <body>', 'Body text', 'This is a mock submission via the CLI.')
     .action(async (cmdOptions) => {
       const options = program.opts<GlobalOptions>();
-      await withTransport(options, async (transport, _session) => {
+      await withTransport(options, async ({ transport }) => {
         const result = await transport.compose({
           sender: parseOrAddress(cmdOptions.from),
           recipients: parseOrAddresses(cmdOptions.to),
@@ -126,7 +126,7 @@ export const buildProgram = ({
     .requiredOption('-i, --id <messageId>', 'Message identifier')
     .action(async (cmdOptions) => {
       const options = program.opts<GlobalOptions>();
-      await withTransport(options, async (transport, _session) => {
+      await withTransport(options, async ({ transport }) => {
         await transport.messages.deleteMessage(cmdOptions.id);
         console.log(green(`Message ${cmdOptions.id} removed`));
       });
@@ -139,7 +139,7 @@ export const buildProgram = ({
     .requiredOption('-f, --folder <folderId>', 'Target folder')
     .action(async (cmdOptions) => {
       const options = program.opts<GlobalOptions>();
-      await withTransport(options, async (transport, _session) => {
+      await withTransport(options, async ({ transport }) => {
         await transport.messages.moveMessage(cmdOptions.id, cmdOptions.folder);
         console.log(green(`Message ${cmdOptions.id} moved to ${cmdOptions.folder}`));
       });
@@ -151,7 +151,7 @@ export const buildProgram = ({
     .requiredOption('-i, --id <messageId>', 'Message identifier')
     .action(async (cmdOptions) => {
       const options = program.opts<GlobalOptions>();
-      await withTransport(options, async (transport, _session) => {
+      await withTransport(options, async ({ transport }) => {
         await transport.messages.archiveMessage(cmdOptions.id);
         console.log(green(`Message ${cmdOptions.id} archived`));
       });
@@ -166,7 +166,7 @@ export const buildProgram = ({
       const timeout = Number.parseInt(cmdOptions.timeout, 10) * 1000;
       const deadline = Date.now() + timeout;
 
-      await withTransport(options, async (transport, _session) => {
+      await withTransport(options, async ({ transport }) => {
         while (Date.now() < deadline) {
           const queued = await transport.messages.listMessages('outbox');
           if (queued.length === 0) {
@@ -188,7 +188,7 @@ export const buildProgram = ({
     .requiredOption('-i, --id <messageId>', 'Message identifier')
     .action(async (cmdOptions) => {
       const options = program.opts<GlobalOptions>();
-      await withTransport(options, async (transport, _session) => {
+      await withTransport(options, async ({ transport }) => {
         const message = await transport.messages.getMessage(cmdOptions.id);
         console.log(
           JSON.stringify(
@@ -211,7 +211,7 @@ export const buildProgram = ({
     .description('Verify SDK connectivity and transport readiness for the active profile')
     .action(async () => {
       const options = program.opts<GlobalOptions>();
-      await withTransport(options, async (transport, session) => {
+      await withTransport(options, async ({ transport, session }) => {
         const status = await transport.status();
         console.log(
           JSON.stringify(
@@ -236,7 +236,7 @@ export const buildProgram = ({
     .option('--body <body>', 'Body text', 'This is a transport submission.')
     .action(async (cmdOptions) => {
       const options = program.opts<GlobalOptions>();
-      await withTransport(options, async (transport, _session) => {
+      await withTransport(options, async ({ transport }) => {
         const result = await transport.compose({
           sender: parseOrAddress(cmdOptions.from),
           recipients: parseOrAddresses(cmdOptions.to),
@@ -254,7 +254,7 @@ export const buildProgram = ({
     .description('Inspect transport mode, TLS configuration, and S/MIME status')
     .action(async () => {
       const options = program.opts<GlobalOptions>();
-      await withTransport(options, async (transport, session) => {
+      await withTransport(options, async ({ transport, session }) => {
         const status = await transport.status();
         if (options.tlsVerify && status.tls.enabled) {
           if (!status.tls.fingerprintMatches || status.tls.error) {

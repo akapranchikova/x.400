@@ -1,11 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+const createMockTransport = vi.fn(() => ({
+  connect: vi.fn().mockResolvedValue({ connected: true }),
+}));
+
 vi.mock(
   '@x400/sdk-wrapper',
   () => ({
-    createMockTransport: vi.fn(() => ({
-      connect: vi.fn().mockResolvedValue({ connected: true }),
-    })),
+    createMockTransport,
+    createTransport: vi.fn((options) => createMockTransport(options)),
   }),
   { virtual: true },
 );
