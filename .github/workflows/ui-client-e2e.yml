@@ -15,9 +15,7 @@ jobs:
       image: mcr.microsoft.com/playwright:v1.47.2-jammy
     env:
       CI: "true"
-      PORT: "5173"
-      HOST: "0.0.0.0"
-      BASE_URL: "http://localhost:5173"
+      PLAYWRIGHT_UI_BASE_URL: "http://127.0.0.1:4173"
       PLAYWRIGHT_JUNIT_OUTPUT: "apps/ui-client/test-results/junit.xml"
     steps:
       - name: Checkout repository
@@ -39,8 +37,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Ensure Playwright Chromium
-        run: pnpm --filter ui-client exec playwright install chromium
+      - name: Ensure Playwright browsers
+        run: pnpm --filter ui-client exec playwright install chromium firefox
 
       - name: Run e2e tests
         run: |

@@ -1,4 +1,5 @@
 node_modules
+.turbo
 .DS_Store
 .dist
 dist
@@ -7,6 +8,8 @@ dist
 .env.local
 *.log
 apps/ui-client/dist
+apps/ui-client/playwright-report
+apps/ui-client/test-results
 packages/core-service/target
 packages/core-service/data/*.db
 packages/docs/site

@@ -12,8 +12,9 @@
     "test": "vitest run",
     "coverage": "vitest run --coverage",
     "test:watch": "vitest",
-    "e2e": "playwright test",
-    "e2e:headed": "playwright test --headed",
+    "playwright:install": "playwright install",
+    "e2e": "pnpm run playwright:install && playwright test",
+    "e2e:headed": "pnpm run playwright:install && playwright test --headed",
     "tauri": "tauri dev"
   },
   "dependencies": {
