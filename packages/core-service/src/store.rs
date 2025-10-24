@@ -5,6 +5,7 @@ use serde_json::json;
 use sqlx::{sqlite::SqliteConnectOptions, Row, SqlitePool};
 use std::path::Path;
 use std::str::FromStr;
+use tracing::warn;
 use uuid::Uuid;
 
 #[derive(Clone)]
@@ -14,9 +15,28 @@ pub struct StoreManager {
 
 impl StoreManager {
     pub async fn new(database_url: &str) -> anyhow::Result<Self> {
+        Self::new_secure(database_url, None).await
+    }
+
+    pub async fn new_secure(
+        database_url: &str,
+        sqlcipher_key: Option<&str>,
+    ) -> anyhow::Result<Self> {
         ensure_sqlite_parent_exists(database_url).await?;
         let options = SqliteConnectOptions::from_str(database_url)?.create_if_missing(true);
         let pool = SqlitePool::connect_with(options).await?;
+
+        if let Some(key) = sqlcipher_key.and_then(|value| {
+            let trimmed = value.trim();
+            if trimmed.is_empty() {
+                None
+            } else {
+                Some(trimmed.to_string())
+            }
+        }) {
+            apply_sqlcipher_key(&pool, &key).await;
+        }
+
         Ok(Self { pool })
     }
 
@@ -214,6 +234,23 @@ async fn ensure_sqlite_parent_exists(database_url: &str) -> anyhow::Result<()> {
     Ok(())
 }
 
+async fn apply_sqlcipher_key(pool: &SqlitePool, key: &str) {
+    let sanitized = key.replace('"', "\"");
+    let escaped = sanitized.replace('\'', "''");
+    let pragma = format!("PRAGMA key = '{escaped}';");
+    if let Err(err) = sqlx::query(&pragma).execute(pool).await {
+        warn!("Unable to apply SQLCipher key", error = %err);
+        return;
+    }
+
+    if let Err(err) = sqlx::query("PRAGMA cipher_memory_security = ON;")
+        .execute(pool)
+        .await
+    {
+        warn!("Unable to enable SQLCipher memory security", error = %err);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -325,5 +362,13 @@ mod tests {
         ensure_sqlite_parent_exists("sqlite::memory:")
             .await
             .expect("memory URLs should not fail");
+    }
+
+    #[tokio::test]
+    async fn new_secure_accepts_sqlcipher_keys() {
+        let store = StoreManager::new_secure("sqlite::memory:", Some("topsecret"))
+            .await
+            .expect("store with sqlcipher key");
+        store.init().await.expect("init store");
     }
 }

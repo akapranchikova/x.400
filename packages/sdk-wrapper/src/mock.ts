@@ -8,7 +8,14 @@ import {
 } from '@x400/shared';
 import axios, { AxiosInstance } from 'axios';
 
-import { IX400Transport, ISubmitResult, TransportFactory, TransportOptions } from './interfaces';
+import {
+  IX400Transport,
+  IServiceStatus,
+  ISubmitResult,
+  ITlsSummary,
+  TransportFactory,
+  TransportOptions,
+} from './interfaces';
 
 const DEFAULT_BASE_URL = 'http://127.0.0.1:7878';
 
@@ -61,6 +68,29 @@ const normalizeSubmitResult = (payload: any): ISubmitResult => ({
   queueReference: payload.queueReference ?? payload.queue_reference ?? '',
   status: (payload.status ?? 'queued') as ISubmitResult['status'],
   diagnosticCode: payload.diagnosticCode ?? payload.diagnostic_code,
+});
+
+const normalizeTls = (payload: any): ITlsSummary => ({
+  enabled: Boolean(payload?.enabled),
+  minVersion: String(payload?.min_version ?? payload?.minVersion ?? 'TLS1_3'),
+  fingerprint: payload?.fingerprint ?? undefined,
+  fingerprintMatches: Boolean(payload?.fingerprint_matches ?? payload?.fingerprintMatches ?? true),
+  expiresAt: payload?.expires_at ?? payload?.expiresAt ?? undefined,
+  error: payload?.error ?? undefined,
+  ocspResponderConfigured: Boolean(
+    payload?.ocsp_responder_configured ?? payload?.ocspResponderConfigured ?? false,
+  ),
+  revocationChecked: Boolean(payload?.revocation_checked ?? payload?.revocationChecked ?? false),
+  warnings: Array.isArray(payload?.warnings)
+    ? payload.warnings.map((entry: any) => String(entry))
+    : [],
+});
+
+const normalizeStatus = (payload: any): IServiceStatus => ({
+  transportMode:
+    (payload?.transport_mode ?? payload?.transportMode ?? 'mock') === 'sdk' ? 'sdk' : 'mock',
+  tls: normalizeTls(payload?.tls ?? {}),
+  smimeEnabled: Boolean(payload?.smime_enabled ?? payload?.smimeEnabled ?? false),
 });
 
 export const createMockTransport: TransportFactory = (options) => {
@@ -131,12 +161,18 @@ export const createMockTransport: TransportFactory = (options) => {
     return normalizeSubmitResult(response.data);
   };
 
+  const status = async () => {
+    const response = await client.get('/status');
+    return normalizeStatus(response.data);
+  };
+
   return {
     connect,
     folders,
     messages,
     trace,
     compose,
+    status,
   } satisfies IX400Transport;
 };
 

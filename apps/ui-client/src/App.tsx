@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
+import type { IServiceStatus } from '@x400/sdk-wrapper';
+
 import { ComposeDialog } from './components/ComposeDialog';
 import { FolderList } from './components/FolderList';
 import { MessageDetail } from './components/MessageDetail';
@@ -28,6 +30,7 @@ const App = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [connected, setConnected] = useState(false);
   const [lastSync, setLastSync] = useState<Date | null>(null);
+  const [serviceStatus, setServiceStatus] = useState<IServiceStatus | null>(null);
 
   const { folders, loading: foldersLoading } = useFolders();
   const { messages, selected, loading, error, selectMessage, reload, submitMessage } =
@@ -36,17 +39,34 @@ const App = () => {
   useEffect(() => {
     const init = async () => {
       try {
-        await getTransport().connect();
+        const transport = getTransport();
+        await transport.connect();
         setConnected(true);
         setLastSync(new Date());
+        try {
+          const status = await transport.status();
+          setServiceStatus(status);
+        } catch (statusError) {
+          console.error(statusError);
+        }
       } catch (err) {
         console.error(err);
         setConnected(false);
+        setServiceStatus(null);
       }
     };
 
     void init();
   }, []);
+
+  const refreshStatus = async () => {
+    try {
+      const status = await getTransport().status();
+      setServiceStatus(status);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
@@ -60,7 +80,12 @@ const App = () => {
       }
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'r') {
         event.preventDefault();
-        void reload().then(() => setLastSync(new Date()));
+        void reload()
+          .then(async () => {
+            setLastSync(new Date());
+            await refreshStatus();
+          })
+          .catch(console.error);
       }
     };
 
@@ -70,6 +95,7 @@ const App = () => {
 
   useEffect(() => {
     setLastSync(new Date());
+    void refreshStatus();
   }, [messages.length]);
 
   const handleComposeSubmit = async (
@@ -81,6 +107,7 @@ const App = () => {
     await submitMessage(subject, body, sender, recipients);
     setComposeOpen(false);
     setLastSync(new Date());
+    await refreshStatus();
   };
 
   const statusMessage = useMemo(() => {
@@ -151,7 +178,7 @@ const App = () => {
         </main>
 
         <footer>
-          <StatusBar connected={connected} lastSync={lastSync} />
+          <StatusBar connected={connected} lastSync={lastSync} status={serviceStatus} />
         </footer>
       </div>
 
@@ -160,7 +187,11 @@ const App = () => {
         onClose={() => setComposeOpen(false)}
         onSubmit={handleComposeSubmit}
       />
-      <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <SettingsPanel
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        status={serviceStatus}
+      />
     </div>
   );
 };

@@ -25,22 +25,39 @@ The goal is to provide a secure, cross-platform replacement for legacy X.400 too
 
 - ✅ pnpm + Turbo monorepo structure
 - ✅ Mock Rust service with SQLite-backed store
-- ✅ React UI with folders, messages, compose, and settings
-- ✅ CLI verbs for create/list/move/access/archive/delete/wait/message
-- 🚧 SDK FFI bindings (mock transport only)
-- 🚧 Security hardening and SQLCipher encryption
+- ✅ React UI with folders, messages, compose, settings, and live status bar
+- ✅ CLI verbs for create/list/move/access/archive/delete/wait/message/bind-test/health
+- ✅ SDK-aware transport wrapper with automatic mock/SDK switching
+- ✅ Security hardening hooks: TLS validation, SQLCipher key retrieval, S/MIME scaffolding
 - ⏳ FWM/FWZ migration tooling
 
 ## Feature matrix
 
-| Capability                                                     | Status                 |
-| -------------------------------------------------------------- | ---------------------- |
-| X.400 P7 Operations: Bind/Submit/Fetch/List/Delete/Register-MS | **Mocked**             |
-| DR/NDR/Read Reports                                            | **Mocked**             |
-| Queue Manager                                                  | **Implemented (mock)** |
-| Local Store (SQLite)                                           | **Implemented (dev)**  |
-| Import FWM/FWZ                                                 | **Planned**            |
-| CLI FW_SI compatibility                                        | **Planned**            |
+| Capability                                                     | Status                               |
+| -------------------------------------------------------------- | ------------------------------------ |
+| X.400 P7 Operations: Bind/Submit/Fetch/List/Delete/Register-MS | **SDK-ready (mock fallback)**        |
+| DR/NDR/Read Reports                                            | **Mocked**                           |
+| Queue Manager                                                  | **Implemented (mock)**               |
+| Local Store (SQLite/SQLCipher)                                 | **Implemented (SQLCipher optional)** |
+| TLS 1.3 enforcement & fingerprint pinning                      | **Implemented**                      |
+| S/MIME sign/encrypt/verify scaffolding                         | **Implemented (cert-dependent)**     |
+| Import FWM/FWZ                                                 | **Planned**                          |
+| CLI FW_SI compatibility                                        | **Planned**                          |
+
+## Security & SDK Integration
+
+The mock transport can now be replaced at runtime with the real vendor SDK via `packages/core-service/src/transport/p7_driver.rs`.
+Key highlights:
+
+- `transport.mode` in `config/default.toml` controls whether the Rust service uses the mock queue or validates SDK profiles.
+- `[transport.sdk]` controls the dynamic SDK integration. Set `library_path` to the vendor-provided shared library and `preferred_profile` to the default runtime profile. Both options can be overridden via `X400_SDK_LIBRARY` / `X400_SDK_PROFILE`.
+- TLS assets are loaded from `profiles/` with expiry checks, fingerprint pinning, and OCSP placeholders.
+- SQLCipher keys resolve from OS keychains (DPAPI, macOS Keychain, Linux Secret Service) with environment fallbacks for CI.
+- S/MIME helpers sign, encrypt, and verify payloads when certificates are present.
+- The CLI (`x400-cli`) exposes `bind-test`, `submit`, and `health` commands to exercise secure profiles.
+- The desktop UI surfaces the active transport mode, TLS verdict, and S/MIME status in the status bar and settings panel.
+
+See [docs/transport-sdk.md](packages/docs/docs/transport-sdk.md) for configuration examples, troubleshooting, and profile management tips.
 
 ## Getting started
 

@@ -1,8 +1,10 @@
+use core_service::config::TransportConfig;
 use core_service::handlers::build_router;
 use core_service::mock_provider::MockDeliveryProvider;
 use core_service::queue::QueueManager;
 use core_service::store::StoreManager;
 use core_service::trace::TraceManager;
+use core_service::transport::TransportTlsState;
 use core_service::AppState;
 use reqwest::Client;
 use serde_json::json;
@@ -26,6 +28,8 @@ async fn spawn_app() -> (String, tokio::task::JoinHandle<()>, TempPath) {
 
     let trace = TraceManager::new();
 
+    let transport_config = TransportConfig::default();
+
     let state = AppState {
         queue: queue.clone(),
         store: store.clone(),
@@ -44,10 +48,14 @@ async fn spawn_app() -> (String, tokio::task::JoinHandle<()>, TempPath) {
             database: core_service::config::DatabaseConfig {
                 url: "sqlite::memory:".to_string(),
                 use_sqlcipher: false,
+                sqlcipher_key_ref: None,
             },
             security: core_service::config::SecurityConfig {
                 require_auth: false,
                 api_key: "test".to_string(),
+                smime: Default::default(),
+                tls: Default::default(),
+                keychain: Default::default(),
             },
             submit: core_service::config::SubmitConfig {
                 default_strategy: 1,
@@ -56,7 +64,11 @@ async fn spawn_app() -> (String, tokio::task::JoinHandle<()>, TempPath) {
                 log_level: "info".to_string(),
                 trace_bundle_path: String::new(),
             },
+            transport: transport_config.clone(),
         }),
+        transport_mode: transport_config.mode,
+        tls_state: TransportTlsState::default(),
+        smime_enabled: false,
     };
 
     let router = build_router(state);

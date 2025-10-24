@@ -69,10 +69,14 @@ fn criterion_submit(c: &mut Criterion) {
                     database: core_service::config::DatabaseConfig {
                         url: "sqlite::memory:".to_string(),
                         use_sqlcipher: false,
+                        sqlcipher_key_ref: None,
                     },
                     security: core_service::config::SecurityConfig {
                         require_auth: false,
                         api_key: "test".to_string(),
+                        smime: Default::default(),
+                        tls: Default::default(),
+                        keychain: Default::default(),
                     },
                     submit: core_service::config::SubmitConfig {
                         default_strategy: 1,
@@ -81,7 +85,11 @@ fn criterion_submit(c: &mut Criterion) {
                         log_level: "info".to_string(),
                         trace_bundle_path: String::new(),
                     },
+                    transport: core_service::config::TransportConfig::default(),
                 }),
+                transport_mode: core_service::config::TransportMode::Mock,
+                tls_state: core_service::transport::TransportTlsState::default(),
+                smime_enabled: false,
             };
 
             let payload = compose_payload();

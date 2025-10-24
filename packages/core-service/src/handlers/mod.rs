@@ -1,4 +1,4 @@
-use crate::config::AppConfig;
+use crate::config::{AppConfig, TransportMode};
 use crate::models::{
     ComposeRequest, Message, MessageContent, MessageEnvelope, MessageStatus, MoveRequest,
     SubmitRequest, SubmitResponse, TraceBundle,
@@ -6,11 +6,12 @@ use crate::models::{
 use crate::queue::{FolderInfo, QueueManager};
 use crate::store::StoreManager;
 use crate::trace::TraceManager;
+use crate::transport::{TransportTlsState, TransportTlsSummary};
 use axum::extract::{Path, Query, State};
 use axum::http::StatusCode;
 use axum::routing::{get, post};
 use axum::{Json, Router};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::sync::Arc;
 use uuid::Uuid;
@@ -21,6 +22,9 @@ pub struct AppState {
     pub store: StoreManager,
     pub trace: TraceManager,
     pub config: Arc<AppConfig>,
+    pub transport_mode: TransportMode,
+    pub tls_state: TransportTlsState,
+    pub smime_enabled: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -205,6 +209,21 @@ pub async fn trace_bundle(State(state): State<AppState>) -> Json<TraceBundle> {
     Json(TraceBundle { entries })
 }
 
+#[derive(Debug, Serialize)]
+pub struct ServiceStatusResponse {
+    pub transport_mode: TransportMode,
+    pub tls: TransportTlsSummary,
+    pub smime_enabled: bool,
+}
+
+pub async fn status(State(state): State<AppState>) -> Json<ServiceStatusResponse> {
+    Json(ServiceStatusResponse {
+        transport_mode: state.transport_mode,
+        tls: TransportTlsSummary::from(&state.tls_state),
+        smime_enabled: state.smime_enabled,
+    })
+}
+
 pub fn build_router(state: AppState) -> Router {
     Router::new()
         .route("/folders", get(get_folders))
@@ -215,5 +234,6 @@ pub fn build_router(state: AppState) -> Router {
         .route("/compose", post(compose))
         .route("/submit", post(submit))
         .route("/trace/bundle", get(trace_bundle))
+        .route("/status", get(status))
         .with_state(state)
 }

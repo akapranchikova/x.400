@@ -11,10 +11,25 @@ private_key_path = "config/certs/dev-key.pem"
 [database]
 url = "sqlite://data/x400.sqlite"
 use_sqlcipher = false
+sqlcipher_key_ref = "x400/core"
 
 [security]
 require_auth = false
 api_key = "replace-me"
+
+[security.smime]
+enabled = false
+certificates_dir = "profiles/certs"
+
+[security.tls]
+min_version = "TLS1_3"
+tls_verify = true
+
+[security.keychain]
+enabled = false
+service_name = "x400-core"
+account_name = "default"
+fallback_env = "X400_SQLCIPHER_KEY"
 
 [submit]
 default_strategy = 0
@@ -22,3 +37,23 @@ default_strategy = 0
 [tracing]
 log_level = "info"
 trace_bundle_path = "traces"
+
+[transport]
+mode = "mock"
+profiles_dir = "profiles"
+fingerprints = []
+
+[transport.tls]
+enabled = true
+min_version = "TLS1_3"
+ca_bundle = "profiles/certs/ca.pem"
+client_certificate = null
+client_key = null
+ocsp_responder = null
+enforce_pinset = false
+
+[transport.sdk]
+library_path = null
+preferred_profile = null
+connect_timeout_ms = 10000
+operation_timeout_ms = 30000
