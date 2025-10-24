@@ -118,7 +118,7 @@ impl SmimeService {
 
         let cert_path = self.default_encryption_cert_path()?;
         let recipient = load_certificate(&cert_path)?;
-        let stack = Stack::new()?;
+        let mut stack = Stack::new()?;
         stack
             .push(recipient)
             .context("failed to push recipient certificate")?;
@@ -152,7 +152,7 @@ impl SmimeService {
             }
         };
 
-        let mut stack = Stack::new()?;
+        let stack = Stack::new()?;
         let store = X509StoreBuilder::new()?.build();
         // We do not provide additional certificates for now to avoid strict dependency
         // on vendor PKI bundles. The verify call ensures structural validation.
