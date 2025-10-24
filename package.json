@@ -18,8 +18,8 @@
     "test:shared": "pnpm --filter @x400/shared run test",
     "test:sdk": "pnpm --filter @x400/sdk-wrapper run test",
     "test:all": "pnpm test && pnpm test:core",
-    "e2e": "pnpm --filter ui-client run e2e",
-    "e2e:headed": "pnpm --filter ui-client run e2e:headed",
+    "e2e": "node ./scripts/install-playwright-browsers.mjs && pnpm --filter ui-client run e2e",
+    "e2e:headed": "node ./scripts/install-playwright-browsers.mjs && pnpm --filter ui-client run e2e:headed",
     "coverage": "turbo run coverage --parallel",
     "lint": "turbo run lint --parallel",
     "fmt": "turbo run format --parallel",
@@ -27,7 +27,9 @@
     "audit": "pnpm audit --prod && pnpm --filter @x400/core-service run audit",
     "docs": "turbo run docs",
     "docs:dev": "pnpm --filter @x400/docs run docs:dev",
-    "prepare": "husky"
+    "prepare": "husky",
+    "env:copy": "node -e \"const fs=require('fs');if(!fs.existsSync('.env')){fs.copyFileSync('.env.example','.env');console.log('Created .env from .env.example');} else {console.log('.env exists')}\"",
+    "env:check": "node -e \"try{require('dotenv').config();}catch(err){console.error('dotenv not installed');process.exit(1);}['CORE_IPC_PORT','X400_MODE'].forEach(k=>{if(!process.env[k]){console.error('Missing env:',k);process.exit(1);}});console.log('Env OK')\""
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,cjs,mjs,json,md,css,scss}": [

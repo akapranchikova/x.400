@@ -1,6 +1,6 @@
 [server]
 host = "127.0.0.1"
-port = 7878
+port = 3333
 
 [server.tls]
 enabled = false
@@ -9,7 +9,7 @@ certificate_path = "config/certs/dev-cert.pem"
 private_key_path = "config/certs/dev-key.pem"
 
 [database]
-url = "sqlite://data/x400.db"
+url = "sqlite://data/x400.sqlite"
 use_sqlcipher = false
 
 [security]
@@ -21,4 +21,4 @@ default_strategy = 0
 
 [tracing]
 log_level = "info"
-trace_bundle_path = "data/trace-bundles"
+trace_bundle_path = "traces"

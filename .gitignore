@@ -3,11 +3,14 @@ node_modules
 .dist
 dist
 .idea
-.env*
-!.env.test
+.env
+.env.local
 *.log
 apps/ui-client/dist
 packages/core-service/target
 packages/core-service/data/*.db
 packages/docs/site
 apps/ui-client/src-tauri/target
+/data/*
+/traces/*
+/certs/*
