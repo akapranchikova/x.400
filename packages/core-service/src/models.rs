@@ -63,8 +63,11 @@ pub enum MessageSensitivity {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MessageStatus {
     Queued,
+    Sent,
     Delivered,
     Read,
+    Failed,
+    Unknown,
 }
 
 /// Envelope metadata stored alongside message content.

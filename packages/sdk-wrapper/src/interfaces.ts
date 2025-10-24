@@ -1,4 +1,13 @@
-import type { Folder, Message, MessageEnvelope, Report, X400Address } from '@x400/shared';
+import type {
+  Folder,
+  Message,
+  MessageEnvelope,
+  MigrationProgress,
+  MigrationReport,
+  MigrationRequest,
+  Report,
+  X400Address,
+} from '@x400/shared';
 
 export interface ISession {
   sessionId: string;
@@ -30,6 +39,12 @@ export interface ITraceService {
   bundle(): Promise<{ entries: unknown[] }>;
 }
 
+export interface IMigrationService {
+  import(request: MigrationRequest): Promise<{ jobId: string }>;
+  progress(jobId: string): Promise<MigrationProgress>;
+  report(jobId: string): Promise<MigrationReport>;
+}
+
 export type IReport = Report;
 
 export interface ITlsSummary {
@@ -55,6 +70,7 @@ export interface IX400Transport {
   folders: IFolderService;
   messages: IMessageService;
   trace: ITraceService;
+  migration: IMigrationService;
   compose(payload: {
     sender: X400Address;
     recipients: X400Address[];

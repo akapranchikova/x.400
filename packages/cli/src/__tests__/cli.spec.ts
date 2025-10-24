@@ -41,6 +41,37 @@ const createTransportMock = () => {
     trace: {
       bundle: vi.fn().mockResolvedValue({ entries: [] }),
     },
+    migration: {
+      import: vi.fn().mockResolvedValue({ jobId: 'job-123' }),
+      progress: vi.fn().mockResolvedValue({
+        jobId: 'job-123',
+        status: 'completed',
+        total: 1,
+        processed: 1,
+        imported: 1,
+        failed: 0,
+        duplicates: 0,
+        dryRun: false,
+        checksumOk: true,
+        startedAt: new Date().toISOString(),
+        finishedAt: new Date().toISOString(),
+        currentPath: '/legacy/message.fwm',
+        notes: [],
+      }),
+      report: vi.fn().mockResolvedValue({
+        jobId: 'job-123',
+        startedAt: new Date().toISOString(),
+        finishedAt: new Date().toISOString(),
+        total: 1,
+        imported: 1,
+        failed: 0,
+        duplicates: 0,
+        dryRun: false,
+        checksumOk: true,
+        notes: ['ok'],
+        errors: [],
+      }),
+    },
     compose: vi.fn().mockResolvedValue({
       messageId: message.envelope.id,
       queueReference: `queue://outbox/${message.envelope.id}`,
@@ -66,17 +97,21 @@ const createTransportMock = () => {
 describe('CLI program', () => {
   // Capture console output; restore after the suite.
   let consoleSpy: any;
+  let consoleErrorSpy: any;
 
   beforeAll(() => {
     consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterAll(() => {
     consoleSpy.mockRestore();
+    consoleErrorSpy.mockRestore();
   });
 
   beforeEach(async () => {
     consoleSpy.mockClear();
+    consoleErrorSpy.mockClear();
     vi.resetModules();
     vi.doMock('@x400/shared', async () => {
       const actual = await vi.importActual<typeof import('../../../shared/src')>(
@@ -244,5 +279,19 @@ describe('CLI program', () => {
 
     expect(transport.status).toHaveBeenCalledTimes(1);
     expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('"status"'));
+  });
+
+  it('runs migration command and prints summary', async () => {
+    const { transport } = createTransportMock();
+    const { buildProgram } = await import('../program');
+    const program = buildProgram({ createTransport: () => transport }).exitOverride();
+
+    await program.parseAsync(['migrate', '--path', '/legacy', '--type', 'fwz'], { from: 'user' });
+
+    expect(transport.migration.import).toHaveBeenCalledWith(
+      expect.objectContaining({ path: '/legacy', mode: 'fwz' }),
+    );
+    expect(transport.migration.report).toHaveBeenCalledWith('job-123');
+    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Migration completed'));
   });
 });

@@ -1,4 +1,5 @@
 pub mod config;
+pub mod migration;
 pub mod mock_provider;
 pub mod models;
 pub mod queue;
@@ -18,15 +19,23 @@ pub struct AppState {
     pub store: StoreManager,
     pub trace: TraceManager,
     pub config: Arc<config::AppConfig>,
+    pub migration: migration::MigrationManager,
 }
 
 impl AppState {
     pub fn new(config: config::AppConfig) -> Self {
+        let queue = QueueManager::new();
+        let store = StoreManager::new();
+        let trace = TraceManager::new();
+        let config = Arc::new(config);
+        let migration = migration::MigrationManager::new(store.clone(), Arc::clone(&config));
+
         Self {
-            queue: QueueManager::new(),
-            store: StoreManager::new(),
-            trace: TraceManager::new(),
-            config: Arc::new(config),
+            queue,
+            store,
+            trace,
+            config,
+            migration,
         }
     }
 }

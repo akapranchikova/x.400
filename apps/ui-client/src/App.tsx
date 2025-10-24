@@ -5,6 +5,7 @@ import type { IServiceStatus } from '@x400/sdk-wrapper';
 import { ComposeDialog } from './components/ComposeDialog';
 import { FolderList } from './components/FolderList';
 import { MessageDetail } from './components/MessageDetail';
+import { MigrationPanel } from './components/MigrationPanel';
 import { MessageList } from './components/MessageList';
 import { SettingsPanel } from './components/SettingsPanel';
 import { StatusBar } from './components/StatusBar';
@@ -24,10 +25,15 @@ const FALLBACK_FOLDERS: Folder[] = [
   { id: 'followUp', name: 'Follow-up', unreadCount: 0 },
 ];
 
+const MIGRATION_ENABLED =
+  ((import.meta as unknown as { env?: Record<string, string> }).env?.VITE_ENABLE_MIGRATION ??
+    (typeof process !== 'undefined' ? process.env?.VITE_ENABLE_MIGRATION : undefined)) === 'true';
+
 const App = () => {
   const [activeFolder, setActiveFolder] = useState(DEFAULT_FOLDER);
   const [composeOpen, setComposeOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [migrationOpen, setMigrationOpen] = useState(false);
   const [connected, setConnected] = useState(false);
   const [lastSync, setLastSync] = useState<Date | null>(null);
   const [serviceStatus, setServiceStatus] = useState<IServiceStatus | null>(null);
@@ -132,6 +138,15 @@ const App = () => {
             >
               Compose (Ctrl+N)
             </button>
+            {MIGRATION_ENABLED ? (
+              <button
+                type="button"
+                onClick={() => setMigrationOpen(true)}
+                className="rounded-md border border-slate-200 px-4 py-2 text-sm"
+              >
+                Migration
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={() => setSettingsOpen(true)}
@@ -192,6 +207,7 @@ const App = () => {
         onClose={() => setSettingsOpen(false)}
         status={serviceStatus}
       />
+      <MigrationPanel open={migrationOpen} onClose={() => setMigrationOpen(false)} />
     </div>
   );
 };

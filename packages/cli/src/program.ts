@@ -2,7 +2,7 @@ import {
   createTransport as createSdkAwareTransport,
   type TransportFactory,
 } from '@x400/sdk-wrapper';
-import { ENV } from '@x400/shared';
+import { ENV, delay, migrationRequestSchema } from '@x400/shared';
 import { Command } from 'commander';
 import { green, yellow } from 'kleur/colors';
 
@@ -281,6 +281,92 @@ export const buildProgram = ({
         );
       });
     });
+
+  program
+    .command('migrate')
+    .description('Import legacy FileWork artifacts (.FWM directories or .FWZ archives)')
+    .requiredOption('-p, --path <path>', 'Path to the legacy workspace or archive')
+    .option('-t, --type <mode>', 'Artifact type (auto|fwm|fwz)', 'auto')
+    .option('-d, --dry-run', 'Parse inputs without persisting changes', false)
+    .option('-r, --resume <jobId>', 'Resume a previously started migration job')
+    .option('--limit <count>', 'Maximum number of messages to import')
+    .option('--since <iso-date>', 'Only import messages created after the provided timestamp')
+    .option('--quarantine <dir>', 'Directory to store quarantined artifacts')
+    .option('--json', 'Emit machine-readable JSON summaries', false)
+    .action(async (cmdOptions) => {
+      const options = program.opts<GlobalOptions>();
+      await withTransport(options, async ({ transport }) => {
+        let limit: number | undefined;
+        if (cmdOptions.limit !== undefined) {
+          limit = Number.parseInt(cmdOptions.limit, 10);
+          if (!Number.isInteger(limit) || (limit as number) <= 0) {
+            throw new Error('Limit must be a positive integer');
+          }
+        }
+
+        const request = migrationRequestSchema.parse({
+          path: cmdOptions.path,
+          mode: cmdOptions.type,
+          dryRun: Boolean(cmdOptions.dryRun),
+          resume: cmdOptions.resume ?? undefined,
+          limit: limit ?? undefined,
+          since: cmdOptions.since ?? undefined,
+          quarantine: cmdOptions.quarantine ?? undefined,
+        });
+
+        const { jobId } = await transport.migration.import(request);
+
+        let progress = await transport.migration.progress(jobId);
+        const logProgress = () => {
+          const payload = { jobId, progress };
+          if (cmdOptions.json) {
+            console.log(JSON.stringify({ type: 'progress', ...payload }, null, 2));
+          } else {
+            console.log(
+              `Progress ${progress.processed}/${progress.total} imported=${progress.imported} failed=${progress.failed} [${progress.status}]`,
+            );
+          }
+        };
+
+        logProgress();
+
+        while (progress.status === 'running' || progress.status === 'pending') {
+          await delay(750);
+          progress = await transport.migration.progress(jobId);
+          logProgress();
+        }
+
+        const report = await transport.migration.report(jobId);
+
+        if (cmdOptions.json) {
+          console.log(JSON.stringify({ type: 'report', jobId, report }, null, 2));
+        } else {
+          console.log('Migration completed');
+          console.log(JSON.stringify(report, null, 2));
+        }
+
+        if (report.failed > 0) {
+          console.error(
+            JSON.stringify(
+              {
+                error: 'migration-failed',
+                message: 'One or more artifacts failed to import',
+                jobId,
+                failed: report.failed,
+              },
+              null,
+              2,
+            ),
+          );
+          process.exitCode = 2;
+        }
+      });
+    });
+
+  program.addHelpText(
+    'afterAll',
+    `\nFW_SI compatibility matrix:\n  list          -> LIST\n  access        -> ACCESS\n  create/submit -> CREATE\n  delete        -> DELETE\n  move          -> MOVE\n  archive       -> ARCHIVE\n  wait          -> WAIT\n  message       -> MESSAGE\n  migrate       -> IMPORT (new dry-run/resume options)\n`,
+  );
 
   return program;
 };

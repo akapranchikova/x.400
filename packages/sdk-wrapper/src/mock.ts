@@ -5,6 +5,10 @@ import {
   folderListSchema,
   messageSchema,
   messageEnvelopeSchema,
+  migrationProgressSchema,
+  migrationReportSchema,
+  migrationRequestSchema,
+  type MigrationRequest,
 } from '@x400/shared';
 import axios, { AxiosInstance } from 'axios';
 
@@ -151,6 +155,23 @@ export const createMockTransport: TransportFactory = (options) => {
     },
   };
 
+  const migration = {
+    async import(request: MigrationRequest) {
+      const parsed = migrationRequestSchema.parse(request);
+      const response = await client.post('/migration/import', parsed);
+      const jobId = response.data?.jobId ?? response.data?.id;
+      return { jobId: String(jobId) };
+    },
+    async progress(jobId: string) {
+      const response = await client.get(`/migration/progress/${jobId}`);
+      return migrationProgressSchema.parse(response.data);
+    },
+    async report(jobId: string) {
+      const response = await client.get(`/migration/report/${jobId}`);
+      return migrationReportSchema.parse(response.data);
+    },
+  };
+
   const compose = async (payload: {
     sender: MessageEnvelope['sender'];
     recipients: MessageEnvelope['to'];
@@ -171,6 +192,7 @@ export const createMockTransport: TransportFactory = (options) => {
     folders,
     messages,
     trace,
+    migration,
     compose,
     status,
   } satisfies IX400Transport;

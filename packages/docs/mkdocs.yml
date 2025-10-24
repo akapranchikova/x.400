@@ -12,10 +12,11 @@ nav:
   - Transport Layer: docs/transport-layer.md
   - SDK Transport Integration: docs/transport-sdk.md
   - Store & Data Model: docs/store-data-model.md
-  - CLI Reference (FW_SI compatibility): docs/cli-reference.md
+  - CLI Reference (FW_SI compatibility): docs/cli.md
+  - Legacy CLI Appendix: docs/cli-reference.md
   - Testing Guide: docs/testing.md
   - Security Model: docs/security-model.md
-  - Migration (FWM/FWZ import concept): docs/migration.md
+  - Migration Runbook (FWM/FWZ): docs/migration.md
   - Roadmap & Status: docs/roadmap.md
 
 theme:
