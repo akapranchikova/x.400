@@ -6,7 +6,43 @@
     <title>X.400 Client Modernization</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-100 p-6 text-slate-800">
+        <div class="mx-auto flex h-[85vh] max-w-6xl flex-col gap-4">
+          <header class="flex items-center justify-between">
+            <div>
+              <h1 class="text-2xl font-semibold">X.400 Client Modernization</h1>
+              <p class="text-sm text-slate-500">Syncing messages…</p>
+            </div>
+            <div class="flex gap-2">
+              <button type="button" class="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow">Compose (Ctrl+N)</button>
+              <button type="button" class="rounded-md border border-slate-200 px-4 py-2 text-sm">Settings (Ctrl+,)</button>
+            </div>
+          </header>
+
+          <main class="grid flex-1 grid-cols-1 gap-4 md:grid-cols-[240px_minmax(300px,400px)_1fr]">
+            <section aria-label="Folder list">
+              <div class="rounded-lg bg-white/70 p-4 text-sm text-slate-500">Loading folders…</div>
+            </section>
+
+            <section class="flex flex-col overflow-hidden rounded-lg bg-white/80 shadow" aria-label="Message list">
+              <div class="p-4 text-sm text-slate-500">Loading messages…</div>
+            </section>
+
+            <section class="rounded-lg bg-white/90 shadow">
+              <div class="p-6 text-sm text-slate-500">Select a message to view details.</div>
+            </section>
+          </main>
+
+          <footer>
+            <div class="flex items-center justify-between rounded-lg bg-white/80 px-4 py-2 text-xs text-slate-600 shadow">
+              <span aria-live="polite">Disconnected</span>
+              <span>Last sync: Waiting…</span>
+            </div>
+          </footer>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
