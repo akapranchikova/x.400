@@ -12,9 +12,11 @@
     "test": "vitest run",
     "coverage": "vitest run --coverage",
     "test:watch": "vitest",
-    "playwright:install": "playwright install",
-    "e2e": "pnpm run playwright:install && playwright test",
-    "e2e:headed": "pnpm run playwright:install && playwright test --headed",
+    "playwright:install": "playwright install chromium firefox",
+    "e2e": "node ./scripts/run-e2e.mjs",
+    "e2e:playwright": "pnpm exec playwright test -c playwright.config.ts",
+    "e2e:headed": "pnpm exec playwright test -c playwright.config.ts --headed",
+    "e2e:offline": "pnpm exec vitest run --config vitest.e2e.config.ts",
     "tauri": "tauri dev"
   },
   "dependencies": {
