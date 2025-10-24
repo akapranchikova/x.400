@@ -2,8 +2,9 @@ use crate::models::{Message, MessageContent, MessageEnvelope, MessageStatus, Rep
 use anyhow::Context;
 use chrono::Utc;
 use serde_json::json;
-use sqlx::{Row, SqlitePool};
+use sqlx::{sqlite::SqliteConnectOptions, Row, SqlitePool};
 use std::path::Path;
+use std::str::FromStr;
 use uuid::Uuid;
 
 #[derive(Clone)]
@@ -14,7 +15,8 @@ pub struct StoreManager {
 impl StoreManager {
     pub async fn new(database_url: &str) -> anyhow::Result<Self> {
         ensure_sqlite_parent_exists(database_url).await?;
-        let pool = SqlitePool::connect(database_url).await?;
+        let options = SqliteConnectOptions::from_str(database_url)?.create_if_missing(true);
+        let pool = SqlitePool::connect_with(options).await?;
         Ok(Self { pool })
     }
 
