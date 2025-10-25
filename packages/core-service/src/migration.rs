@@ -26,11 +26,11 @@ pub enum MigrationError {
     Io(#[from] io::Error),
     #[error("unable to open archive: {0}")]
     Archive(#[from] zip::result::ZipError),
-    #[error("file does not contain legacy metadata")] 
+    #[error("file does not contain legacy metadata")]
     EmptyDocument,
-    #[error("document contained an invalid record: {0}")] 
+    #[error("document contained an invalid record: {0}")]
     InvalidRecord(String),
-    #[error("the requested job could not be found")] 
+    #[error("the requested job could not be found")]
     UnknownJob,
 }
 
@@ -76,7 +76,11 @@ impl FwmDocument {
         DateTime::parse_from_rfc3339(&value)
             .map(|dt| dt.with_timezone(&Utc))
             .ok()
-            .or_else(|| DateTime::parse_from_str(&value, "%Y%m%d%H%M%S").ok().map(|dt| dt.with_timezone(&Utc)))
+            .or_else(|| {
+                DateTime::parse_from_str(&value, "%Y%m%d%H%M%S")
+                    .ok()
+                    .map(|dt| dt.with_timezone(&Utc))
+            })
     }
 
     pub fn status(&self) -> MessageStatus {
@@ -114,7 +118,7 @@ impl FwmDocument {
             .unwrap_or_default();
 
         let mut recipients = list
-            .split(|c| matches!(c, '\n' | '|' | ','))
+            .split(['\n', '|', ','])
             .map(str::trim)
             .filter(|entry| !entry.is_empty())
             .filter_map(parse_address)
@@ -412,7 +416,10 @@ impl MigrationManager {
         let request;
         {
             let jobs = self.jobs.lock().unwrap();
-            request = jobs.get(&job_id).map(|job| job.request.clone()).ok_or(MigrationError::UnknownJob)?;
+            request = jobs
+                .get(&job_id)
+                .map(|job| job.request.clone())
+                .ok_or(MigrationError::UnknownJob)?;
         }
 
         let (documents, checksum_ok) = match self.resolve_documents(&request)? {
@@ -462,7 +469,14 @@ impl MigrationManager {
                     if result.is_duplicate {
                         duplicates += 1;
                     }
-                    self.update_progress(job_id, Some(path), processed, imported, failed, duplicates)?;
+                    self.update_progress(
+                        job_id,
+                        Some(path),
+                        processed,
+                        imported,
+                        failed,
+                        duplicates,
+                    )?;
                 }
                 Err(err) => {
                     failed += 1;
@@ -470,7 +484,14 @@ impl MigrationManager {
                         path: path.clone(),
                         message: err.to_string(),
                     });
-                    self.update_progress(job_id, Some(path), processed, imported, failed, duplicates)?;
+                    self.update_progress(
+                        job_id,
+                        Some(path),
+                        processed,
+                        imported,
+                        failed,
+                        duplicates,
+                    )?;
                 }
             }
         }
@@ -520,9 +541,7 @@ impl MigrationManager {
         duplicates: usize,
     ) -> Result<(), MigrationError> {
         let mut jobs = self.jobs.lock().unwrap();
-        let job = jobs
-            .get_mut(&job_id)
-            .ok_or(MigrationError::UnknownJob)?;
+        let job = jobs.get_mut(&job_id).ok_or(MigrationError::UnknownJob)?;
         job.progress.processed = processed;
         job.progress.imported = imported;
         job.progress.failed = failed;
@@ -531,7 +550,11 @@ impl MigrationManager {
         Ok(())
     }
 
-    fn import_document(&self, document: &FwmDocument, dry_run: bool) -> Result<ImportResult, MigrationError> {
+    fn import_document(
+        &self,
+        document: &FwmDocument,
+        dry_run: bool,
+    ) -> Result<ImportResult, MigrationError> {
         let subject = document.subject();
         let sender = document.sender();
         let recipients = document.recipients();
@@ -562,7 +585,10 @@ impl MigrationManager {
         Ok(ImportResult { is_duplicate })
     }
 
-    fn resolve_documents(&self, request: &MigrationRequest) -> Result<ResolvedDocuments, MigrationError> {
+    fn resolve_documents(
+        &self,
+        request: &MigrationRequest,
+    ) -> Result<ResolvedDocuments, MigrationError> {
         let path = request.path.clone();
         let mode = match request.mode {
             MigrationMode::Auto => infer_mode(&path),
@@ -633,8 +659,13 @@ struct ImportResult {
 }
 
 enum ResolvedDocuments {
-    Fwm { docs: Vec<FwmDocument> },
-    Fwz { docs: Vec<FwmDocument>, checksum_ok: bool },
+    Fwm {
+        docs: Vec<FwmDocument>,
+    },
+    Fwz {
+        docs: Vec<FwmDocument>,
+        checksum_ok: bool,
+    },
 }
 
 fn infer_mode(path: &Path) -> MigrationMode {

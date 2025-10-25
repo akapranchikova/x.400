@@ -19,7 +19,10 @@ fn write_fwz(base: &Path, entries: &[(&str, &[u8])]) -> PathBuf {
 
     for (name, data) in entries {
         writer
-            .start_file(*name, FileOptions::default().compression_method(CompressionMethod::Stored))
+            .start_file(
+                *name,
+                FileOptions::default().compression_method(CompressionMethod::Stored),
+            )
             .expect("start file");
         writer.write_all(data).expect("write entry");
     }
@@ -39,10 +42,13 @@ fn parse_fwm_decodes_cp1252_payloads() {
 #[test]
 fn read_fwz_extracts_documents_and_attachments() {
     let dir = tempdir().expect("fwz dir");
-    let fwz_path = write_fwz(dir.path(), &[
-        ("META/message.fwm", b"SUBJECT=Archive\nBODY=Attached\n"),
-        ("ATTACH/file.txt", b"sample"),
-    ]);
+    let fwz_path = write_fwz(
+        dir.path(),
+        &[
+            ("META/message.fwm", b"SUBJECT=Archive\nBODY=Attached\n"),
+            ("ATTACH/file.txt", b"sample"),
+        ],
+    );
 
     let archive = read_fwz(&fwz_path).expect("read archive");
     assert_eq!(archive.documents.len(), 1);
@@ -78,7 +84,10 @@ fn migration_manager_imports_documents_and_tracks_progress() {
     let progress = manager.progress(job_id).expect("progress");
     assert_eq!(progress.imported, 1);
     assert_eq!(progress.failed, 0);
-    assert_eq!(progress.status, core_service::migration::MigrationStatus::Completed);
+    assert_eq!(
+        progress.status,
+        core_service::migration::MigrationStatus::Completed
+    );
 
     let report = manager.report(job_id).expect("report");
     assert_eq!(report.imported, 1);
