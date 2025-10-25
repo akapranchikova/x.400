@@ -15,7 +15,6 @@ import {
   type MigrationRequest,
 } from '@x400/shared';
 import axios, { AxiosInstance } from 'axios';
-import { z } from 'zod';
 
 import {
   IX400Transport,
@@ -200,7 +199,7 @@ export const createMockTransport: TransportFactory = (options) => {
     async peekInbound(limit?: number) {
       const response = await client.get('/gateway/inbound/peek', { params: { limit } });
       return {
-        messages: z.array(inboundGatewayMessageSchema).parse(response.data ?? []),
+        messages: inboundGatewayMessageSchema.array().parse(response.data ?? []),
       };
     },
     async acknowledge(ids: string[]) {
