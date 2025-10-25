@@ -17,6 +17,14 @@
       "dependsOn": ["test"],
       "outputs": ["coverage/**", "test-results/**"]
     },
+    "gateway-tests": {
+      "dependsOn": ["^build"],
+      "outputs": ["test-results/**"]
+    },
+    "directory-tests": {
+      "dependsOn": ["^build"],
+      "outputs": ["test-results/**"]
+    },
     "e2e": {
       "dependsOn": ["build"],
       "outputs": ["playwright-report/**", "test-results/**"],

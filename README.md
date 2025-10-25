@@ -25,7 +25,9 @@ The goal is to provide a secure, cross-platform replacement for legacy X.400 too
 
 - ✅ pnpm + Turbo monorepo structure
 - ✅ Mock Rust service with SQLite-backed store
-- ✅ React UI with folders, messages, compose, settings, and live status bar
+- ✅ React UI with folders, messages, compose, settings, advanced search, and live status bar
+- ✅ SMTP↔X.400 gateway adapter with address preview and domain allow list enforcement
+- ✅ LDAP/X.500 directory integration with autocomplete, caching, and CLI verbs
 - ✅ CLI verbs for create/list/move/access/archive/delete/wait/message/bind-test/health/migrate
 - ✅ SDK-aware transport wrapper with automatic mock/SDK switching
 - ✅ Security hardening hooks: TLS validation, SQLCipher key retrieval, S/MIME scaffolding
@@ -37,6 +39,8 @@ The goal is to provide a secure, cross-platform replacement for legacy X.400 too
 | -------------------------------------------------------------- | ------------------------------------ |
 | X.400 P7 Operations: Bind/Submit/Fetch/List/Delete/Register-MS | **SDK-ready (mock fallback)**        |
 | DR/NDR/Read Reports                                            | **Mocked**                           |
+| SMTP↔X.400 Gateway                                            | **Mocked (preview + allow list)**    |
+| Directory autocomplete & DLs                                   | **Mocked (cache + CLI)**             |
 | Queue Manager                                                  | **Implemented (mock)**               |
 | Local Store (SQLite/SQLCipher)                                 | **Implemented (SQLCipher optional)** |
 | TLS 1.3 enforcement & fingerprint pinning                      | **Implemented**                      |

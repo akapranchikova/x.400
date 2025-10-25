@@ -2,7 +2,11 @@ import {
   Folder,
   Message,
   MessageEnvelope,
+  directoryEntrySchema,
+  distributionListSchema,
   folderListSchema,
+  gatewaySendResultSchema,
+  inboundGatewayMessageSchema,
   messageSchema,
   messageEnvelopeSchema,
   migrationProgressSchema,
@@ -11,6 +15,7 @@ import {
   type MigrationRequest,
 } from '@x400/shared';
 import axios, { AxiosInstance } from 'axios';
+import { z } from 'zod';
 
 import {
   IX400Transport,
@@ -187,12 +192,68 @@ export const createMockTransport: TransportFactory = (options) => {
     return normalizeStatus(response.data);
   };
 
+  const gateway = {
+    async send(payload: { to: string[]; subject: string; body: string; from?: string }) {
+      const response = await client.post('/gateway/outbound', payload);
+      return gatewaySendResultSchema.parse(response.data);
+    },
+    async peekInbound(limit?: number) {
+      const response = await client.get('/gateway/inbound/peek', { params: { limit } });
+      return {
+        messages: z.array(inboundGatewayMessageSchema).parse(response.data ?? []),
+      };
+    },
+    async acknowledge(ids: string[]) {
+      const response = await client.post('/gateway/ack', { ids });
+      return {
+        acknowledged: Number(response.data?.acknowledged ?? ids.length),
+      };
+    },
+    async preview(address: string) {
+      const response = await client.post('/gateway/preview', { address });
+      return {
+        mapped: String(response.data?.mapped ?? ''),
+        warnings: Array.isArray(response.data?.warnings)
+          ? response.data.warnings.map((entry: any) => String(entry))
+          : [],
+      };
+    },
+  };
+
+  const directory = {
+    async search(query: string) {
+      const response = await client.post('/directory/search', { query });
+      const entries = Array.isArray(response.data?.entries)
+        ? response.data.entries
+        : Array.isArray(response.data)
+          ? response.data
+          : [];
+      return entries.map((item: unknown) => directoryEntrySchema.parse(item));
+    },
+    async getEntry(id: string) {
+      const response = await client.get(`/directory/entry/${id}`);
+      if (!response.data) {
+        return null;
+      }
+      return directoryEntrySchema.parse(response.data);
+    },
+    async getDistributionList(id: string) {
+      const response = await client.get(`/directory/dl/${id}`);
+      if (!response.data) {
+        return null;
+      }
+      return distributionListSchema.parse(response.data);
+    },
+  };
+
   return {
     connect,
     folders,
     messages,
     trace,
     migration,
+    gateway,
+    directory,
     compose,
     status,
   } satisfies IX400Transport;

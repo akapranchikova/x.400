@@ -18,6 +18,8 @@
     "test:shared": "pnpm --filter @x400/shared run test",
     "test:sdk": "pnpm --filter @x400/sdk-wrapper run test",
     "test:all": "pnpm test && pnpm test:core",
+    "gateway-tests": "pnpm --filter @x400/core-service run gateway-tests",
+    "directory-tests": "pnpm --filter @x400/core-service run directory-tests",
     "e2e": "node ./scripts/install-playwright-browsers.mjs && pnpm --filter ui-client run e2e",
     "e2e:headed": "node ./scripts/install-playwright-browsers.mjs && pnpm --filter ui-client run e2e:headed",
     "coverage": "turbo run coverage --parallel",

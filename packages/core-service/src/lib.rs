@@ -1,4 +1,6 @@
 pub mod config;
+pub mod directory;
+pub mod gateway;
 pub mod migration;
 pub mod mock_provider;
 pub mod models;
