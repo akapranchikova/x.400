@@ -54,6 +54,27 @@ impl Default for DatabaseConfig {
 pub struct AppConfig {
     pub server: ServerConfig,
     pub database: DatabaseConfig,
+    pub migration: MigrationConfig,
+}
+
+/// Migration related configuration.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct MigrationConfig {
+    pub workspace: String,
+    pub quarantine: String,
+    pub charset_fallback: String,
+    pub parallelism: usize,
+}
+
+impl Default for MigrationConfig {
+    fn default() -> Self {
+        Self {
+            workspace: "workspace/migration".into(),
+            quarantine: "workspace/quarantine".into(),
+            charset_fallback: "utf-8".into(),
+            parallelism: 4,
+        }
+    }
 }
 
 impl AppConfig {
@@ -94,6 +115,19 @@ impl AppConfig {
                 }
                 "database.path" => {
                     result.database.path = value.to_string();
+                }
+                "migration.workspace" => {
+                    result.migration.workspace = value.to_string();
+                }
+                "migration.quarantine" => {
+                    result.migration.quarantine = value.to_string();
+                }
+                "migration.charsetFallback" => {
+                    result.migration.charset_fallback = value.to_string();
+                }
+                "migration.parallelism" => {
+                    result.migration.parallelism =
+                        value.parse().map_err(|_| ConfigError::InvalidFormat)?;
                 }
                 _ => {}
             }

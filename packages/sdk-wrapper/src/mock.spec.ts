@@ -111,4 +111,59 @@ describe('createMockTransport', () => {
     expect(status.tls.enabled).toBe(true);
     expect(status.smimeEnabled).toBe(true);
   });
+
+  it('provides migration helpers that validate payloads', async () => {
+    const jobId = '00000000-0000-0000-0000-000000000001';
+
+    nock(BASE_URL)
+      .post('/migration/import', {
+        path: '/legacy',
+        mode: 'fwz',
+        dryRun: false,
+      })
+      .reply(200, { jobId })
+      .get(`/migration/progress/${jobId}`)
+      .reply(200, {
+        jobId,
+        status: 'running',
+        total: 1,
+        processed: 1,
+        imported: 1,
+        failed: 0,
+        duplicates: 0,
+        dryRun: false,
+        checksumOk: true,
+        startedAt: new Date().toISOString(),
+        finishedAt: null,
+        notes: [],
+      })
+      .get(`/migration/report/${jobId}`)
+      .reply(200, {
+        jobId,
+        startedAt: new Date().toISOString(),
+        finishedAt: new Date().toISOString(),
+        total: 1,
+        imported: 1,
+        failed: 0,
+        duplicates: 0,
+        dryRun: false,
+        checksumOk: true,
+        notes: ['completed'],
+        errors: [],
+      });
+
+    const transport = createMockTransport({ baseUrl: BASE_URL });
+    const { jobId: created } = await transport.migration.import({
+      path: '/legacy',
+      mode: 'fwz',
+      dryRun: false,
+    });
+    expect(created).toBe(jobId);
+
+    const progress = await transport.migration.progress(jobId);
+    expect(progress.imported).toBe(1);
+
+    const report = await transport.migration.report(jobId);
+    expect(report.notes).toContain('completed');
+  });
 });

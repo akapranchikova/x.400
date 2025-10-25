@@ -26,10 +26,10 @@ The goal is to provide a secure, cross-platform replacement for legacy X.400 too
 - ✅ pnpm + Turbo monorepo structure
 - ✅ Mock Rust service with SQLite-backed store
 - ✅ React UI with folders, messages, compose, settings, and live status bar
-- ✅ CLI verbs for create/list/move/access/archive/delete/wait/message/bind-test/health
+- ✅ CLI verbs for create/list/move/access/archive/delete/wait/message/bind-test/health/migrate
 - ✅ SDK-aware transport wrapper with automatic mock/SDK switching
 - ✅ Security hardening hooks: TLS validation, SQLCipher key retrieval, S/MIME scaffolding
-- ⏳ FWM/FWZ migration tooling
+- ✅ FWM/FWZ migration tooling with dry-run, resume, and checksum validation
 
 ## Feature matrix
 
@@ -41,8 +41,8 @@ The goal is to provide a secure, cross-platform replacement for legacy X.400 too
 | Local Store (SQLite/SQLCipher)                                 | **Implemented (SQLCipher optional)** |
 | TLS 1.3 enforcement & fingerprint pinning                      | **Implemented**                      |
 | S/MIME sign/encrypt/verify scaffolding                         | **Implemented (cert-dependent)**     |
-| Import FWM/FWZ                                                 | **Planned**                          |
-| CLI FW_SI compatibility                                        | **Planned**                          |
+| Import FWM/FWZ                                                 | **Implemented (dry-run/resume)**     |
+| CLI FW_SI compatibility                                        | **Implemented (see docs/cli.md)**    |
 
 ## Security & SDK Integration
 
@@ -130,6 +130,13 @@ Additional details—test data, mock services, and CI pipelines—are documented
 ```bash
 pnpm docs:dev
 ```
+
+### Migration & CLI quick start
+
+- Run a dry-run against a legacy workspace: `pnpm --filter @x400/cli exec x400-cli migrate --path ./legacy --dry-run --json`.
+- Start a full import with resume support: `x400-cli migrate --path ./legacy/archive.fwz --type fwz --quarantine ./quarantine`.
+- Enable the admin UI migration panel by setting `VITE_ENABLE_MIGRATION=true` in your `.env` before launching `pnpm --filter ui-client dev`.
+- Review the full runbook and troubleshooting tips in [packages/docs/docs/migration.md](packages/docs/docs/migration.md) and the FW_SI compatibility table in [packages/docs/docs/cli.md](packages/docs/docs/cli.md).
 
 ## Project structure
 

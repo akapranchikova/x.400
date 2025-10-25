@@ -1,6 +1,15 @@
+import { randomUUID } from 'crypto';
+
 import { describe, expect, it } from 'vitest';
 
-import { messageSchema, reportSchema, x400AddressSchema } from '..';
+import {
+  messageSchema,
+  migrationProgressSchema,
+  migrationReportSchema,
+  migrationRequestSchema,
+  reportSchema,
+  x400AddressSchema,
+} from '..';
 import { makeAddress, makeMessage, makeReport } from '../../testing';
 
 describe('shared schema validation', () => {
@@ -63,5 +72,49 @@ describe('shared schema validation', () => {
         }),
       ]),
     );
+  });
+
+  it('validates migration request and report payloads', () => {
+    const request = migrationRequestSchema.parse({
+      path: '/data/legacy',
+      dryRun: true,
+      limit: 10,
+    });
+
+    expect(request.mode).toBe('auto');
+    expect(request.dryRun).toBe(true);
+
+    const progress = migrationProgressSchema.parse({
+      jobId: randomUUID(),
+      status: 'running',
+      total: 10,
+      processed: 3,
+      imported: 3,
+      failed: 0,
+      duplicates: 0,
+      dryRun: true,
+      checksumOk: true,
+      startedAt: new Date().toISOString(),
+      finishedAt: null,
+      notes: [],
+    });
+
+    expect(progress.processed).toBe(3);
+
+    const report = migrationReportSchema.parse({
+      jobId: progress.jobId,
+      startedAt: progress.startedAt,
+      finishedAt: new Date().toISOString(),
+      total: progress.total,
+      imported: progress.imported,
+      failed: progress.failed,
+      duplicates: progress.duplicates,
+      dryRun: progress.dryRun,
+      checksumOk: true,
+      notes: ['dry-run'],
+      errors: [],
+    });
+
+    expect(report.notes).toContain('dry-run');
   });
 });
