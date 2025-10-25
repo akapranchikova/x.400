@@ -4,14 +4,14 @@ The X.400 client monorepo includes TypeScript, Rust, and Playwright projects. Th
 
 ## Test Taxonomy
 
-| Layer | Purpose | Tooling |
-| --- | --- | --- |
-| **Unit** | Validate individual utilities, hooks, and managers. | `vitest`, `cargo test` |
-| **Integration** | Exercise IPC flows between SDK wrapper, CLI, and core-service. | `vitest`, `cargo test`, Playwright route mocks |
-| **Contract** | Ensure the OpenAPI contract matches generated clients. | `@apidevtools/swagger-parser`, `openapi-client-axios`, `serde_json` |
-| **End-to-end (E2E)** | Simulate a user composing, submitting, and receiving delivery reports in the UI. | Playwright + Tauri/Vite preview |
-| **Performance smoke** | Benchmark the compose/submit loop in Rust. | `criterion` bench (`cargo bench --bench submit_loop`) |
-| **Security** | Scan dependencies and lint for risky patterns. | `pnpm audit`, `cargo audit`, `eslint-plugin-security` |
+| Layer                 | Purpose                                                                          | Tooling                                                             |
+| --------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| **Unit**              | Validate individual utilities, hooks, and managers.                              | `vitest`, `cargo test`                                              |
+| **Integration**       | Exercise IPC flows between SDK wrapper, CLI, and core-service.                   | `vitest`, `cargo test`, Playwright route mocks                      |
+| **Contract**          | Ensure the OpenAPI contract matches generated clients.                           | `@apidevtools/swagger-parser`, `openapi-client-axios`, `serde_json` |
+| **End-to-end (E2E)**  | Simulate a user composing, submitting, and receiving delivery reports in the UI. | Playwright + Tauri/Vite preview                                     |
+| **Performance smoke** | Benchmark the compose/submit loop in Rust.                                       | `criterion` bench (`cargo bench --bench submit_loop`)               |
+| **Security**          | Scan dependencies and lint for risky patterns.                                   | `pnpm audit`, `cargo audit`, `eslint-plugin-security`               |
 
 ## Commands Overview
 
@@ -28,6 +28,8 @@ pnpm test:sdk        # packages/sdk-wrapper
 pnpm test:cli        # packages/cli
 pnpm test:shared     # packages/shared
 pnpm test:core       # cargo tests (unit + integration)
+pnpm gateway-tests  # core-service gateway adapter tests
+pnpm directory-tests # core-service directory tests
 
 # Playwright end-to-end scenarios
 pnpm e2e             # headless
@@ -87,11 +89,11 @@ pnpm --filter @x400/core-service exec cargo bench --bench submit_loop
 
 ## Coverage Targets
 
-| Package | Lines | Branches |
-| --- | --- | --- |
-| `apps/ui-client` | ≥ 70% | ≥ 70% |
-| `packages/sdk-wrapper` | ≥ 80% | ≥ 75% |
-| `packages/cli` | ≥ 80% | ≥ 75% |
+| Package                | Lines | Branches |
+| ---------------------- | ----- | -------- |
+| `apps/ui-client`       | ≥ 70% | ≥ 70%    |
+| `packages/sdk-wrapper` | ≥ 80% | ≥ 75%    |
+| `packages/cli`         | ≥ 80% | ≥ 75%    |
 
 Coverage reports are emitted to `coverage/` per package (HTML + lcov). Use `pnpm coverage` to aggregate.
 

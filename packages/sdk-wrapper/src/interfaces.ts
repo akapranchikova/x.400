@@ -1,11 +1,14 @@
 import type {
+  DistributionList,
   Folder,
+  GatewaySendResult,
   Message,
   MessageEnvelope,
   MigrationProgress,
   MigrationReport,
   MigrationRequest,
   Report,
+  DirectoryEntry,
   X400Address,
 } from '@x400/shared';
 
@@ -45,6 +48,26 @@ export interface IMigrationService {
   report(jobId: string): Promise<MigrationReport>;
 }
 
+export interface IGatewayService {
+  send(payload: {
+    to: string[];
+    subject: string;
+    body: string;
+    from?: string;
+  }): Promise<GatewaySendResult>;
+  peekInbound(
+    limit?: number,
+  ): Promise<{ messages: { uid: string; subject: string; from: string }[] }>;
+  acknowledge(ids: string[]): Promise<{ acknowledged: number }>;
+  preview(address: string): Promise<{ mapped: string; warnings: string[] }>;
+}
+
+export interface IDirectoryService {
+  search(query: string): Promise<DirectoryEntry[]>;
+  getEntry(id: string): Promise<DirectoryEntry | null>;
+  getDistributionList(id: string): Promise<DistributionList | null>;
+}
+
 export type IReport = Report;
 
 export interface ITlsSummary {
@@ -71,6 +94,8 @@ export interface IX400Transport {
   messages: IMessageService;
   trace: ITraceService;
   migration: IMigrationService;
+  gateway: IGatewayService;
+  directory: IDirectoryService;
   compose(payload: {
     sender: X400Address;
     recipients: X400Address[];

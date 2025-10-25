@@ -74,6 +74,17 @@ export const createSdkTransport: TransportFactory = (options: TransportOptions =
       progress: wrap(base.migration.progress, retries, delayMs),
       report: wrap(base.migration.report, retries, delayMs),
     },
+    gateway: {
+      send: wrap(base.gateway.send, retries, delayMs),
+      peekInbound: wrap(base.gateway.peekInbound, retries, delayMs),
+      acknowledge: wrap(base.gateway.acknowledge, retries, delayMs),
+      preview: wrap(base.gateway.preview, retries, delayMs),
+    },
+    directory: {
+      search: wrap(base.directory.search, retries, delayMs),
+      getEntry: wrap(base.directory.getEntry, retries, delayMs),
+      getDistributionList: wrap(base.directory.getDistributionList, retries, delayMs),
+    },
     compose: wrap(base.compose, retries, delayMs),
     status: wrap(base.status, retries, delayMs),
   };

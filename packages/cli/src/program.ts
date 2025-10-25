@@ -363,6 +363,141 @@ export const buildProgram = ({
       });
     });
 
+  const gateway = program.command('gateway').description('Interact with SMTP/IMAP gateway');
+
+  gateway
+    .command('send')
+    .description('Send a message through the SMTP gateway adapter')
+    .requiredOption('--to <email...>', 'Recipient RFC822 addresses')
+    .requiredOption('--subject <subject>', 'Subject line for the message')
+    .option('--body <body>', 'Message body', '')
+    .option('--from <address>', 'Optional envelope sender address')
+    .option('--json', 'Emit JSON output', false)
+    .action(async (cmdOptions) => {
+      const options = program.opts<GlobalOptions>();
+      await withTransport(options, async ({ transport }) => {
+        const result = await transport.gateway.send({
+          to: Array.isArray(cmdOptions.to) ? cmdOptions.to : [cmdOptions.to],
+          subject: cmdOptions.subject,
+          body: cmdOptions.body,
+          from: cmdOptions.from,
+        });
+        if (cmdOptions.json) {
+          console.log(JSON.stringify(result, null, 2));
+          return;
+        }
+        console.log(green(`Gateway accepted message ${result.messageId}`));
+        if (result.warnings.length) {
+          console.log(yellow(result.warnings.join('\n')));
+        }
+      });
+    });
+
+  gateway
+    .command('inbound')
+    .description('Peek inbound messages from the gateway mailbox')
+    .option('--limit <count>', 'Maximum number of messages to return', (value) => Number(value), 10)
+    .option('--json', 'Emit JSON output', false)
+    .action(async (cmdOptions) => {
+      const options = program.opts<GlobalOptions>();
+      await withTransport(options, async ({ transport }) => {
+        const peek = await transport.gateway.peekInbound(cmdOptions.limit);
+        if (cmdOptions.json) {
+          console.log(JSON.stringify(peek, null, 2));
+          return;
+        }
+        if (!peek.messages.length) {
+          console.log('No inbound messages available.');
+          return;
+        }
+        for (const message of peek.messages) {
+          console.log(`[#${message.uid}] ${message.subject} ← ${message.from}`);
+        }
+      });
+    });
+
+  gateway
+    .command('ack')
+    .description('Acknowledge inbound messages after processing')
+    .option('--ids <ids...>', 'Message identifiers to acknowledge', [])
+    .action(async (cmdOptions) => {
+      const options = program.opts<GlobalOptions>();
+      await withTransport(options, async ({ transport }) => {
+        const ids: string[] = Array.isArray(cmdOptions.ids) ? cmdOptions.ids : [cmdOptions.ids];
+        const response = await transport.gateway.acknowledge(ids.filter(Boolean));
+        console.log(green(`Acknowledged ${response.acknowledged} message(s)`));
+      });
+    });
+
+  const directory = program.command('directory').description('Search the organisation directory');
+
+  directory
+    .command('search')
+    .description('Search for entries by display name or address')
+    .requiredOption('--query <value>', 'Search query')
+    .option('--json', 'Emit JSON output', false)
+    .action(async (cmdOptions) => {
+      const options = program.opts<GlobalOptions>();
+      await withTransport(options, async ({ transport }) => {
+        const results = await transport.directory.search(cmdOptions.query);
+        if (cmdOptions.json) {
+          console.log(JSON.stringify(results, null, 2));
+          return;
+        }
+        if (!results.length) {
+          console.log('No directory entries matched the query.');
+          return;
+        }
+        results.forEach((entry) => {
+          console.log(`${entry.displayName} <${entry.rfc822}> (${entry.orAddress})`);
+        });
+      });
+    });
+
+  directory
+    .command('entry')
+    .description('Fetch a directory entry by identifier')
+    .requiredOption('--id <id>', 'Directory entry identifier')
+    .option('--json', 'Emit JSON output', false)
+    .action(async (cmdOptions) => {
+      const options = program.opts<GlobalOptions>();
+      await withTransport(options, async ({ transport }) => {
+        const entry = await transport.directory.getEntry(cmdOptions.id);
+        if (!entry) {
+          console.log(yellow('Entry not found.'));
+          return;
+        }
+        if (cmdOptions.json) {
+          console.log(JSON.stringify(entry, null, 2));
+          return;
+        }
+        console.log(`${entry.displayName} <${entry.rfc822}>`);
+        console.log(entry.orAddress);
+      });
+    });
+
+  directory
+    .command('dl')
+    .description('Inspect a distribution list by identifier')
+    .requiredOption('--id <id>', 'Distribution list identifier')
+    .option('--json', 'Emit JSON output', false)
+    .action(async (cmdOptions) => {
+      const options = program.opts<GlobalOptions>();
+      await withTransport(options, async ({ transport }) => {
+        const list = await transport.directory.getDistributionList(cmdOptions.id);
+        if (!list) {
+          console.log(yellow('Distribution list not found.'));
+          return;
+        }
+        if (cmdOptions.json) {
+          console.log(JSON.stringify(list, null, 2));
+          return;
+        }
+        console.log(`${list.name} [${list.id}]`);
+        list.members.forEach((member) => console.log(` - ${member}`));
+      });
+    });
+
   program.addHelpText(
     'afterAll',
     `\nFW_SI compatibility matrix:\n  list          -> LIST\n  access        -> ACCESS\n  create/submit -> CREATE\n  delete        -> DELETE\n  move          -> MOVE\n  archive       -> ARCHIVE\n  wait          -> WAIT\n  message       -> MESSAGE\n  migrate       -> IMPORT (new dry-run/resume options)\n`,

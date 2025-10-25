@@ -6,6 +6,8 @@
     "dev": "cargo run",
     "build": "cargo build --release",
     "test": "cargo test",
+    "gateway-tests": "cargo test gateway",
+    "directory-tests": "cargo test directory",
     "lint": "cargo clippy --all-targets --all-features -- -D warnings",
     "format": "cargo fmt",
     "audit": "cargo audit"
