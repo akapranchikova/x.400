@@ -1,6 +1,12 @@
 use core_service::config::{AppConfig, ConfigError};
 use std::fs;
 use std::path::Path;
+use std::sync::{Mutex, MutexGuard, OnceLock};
+
+fn env_guard() -> MutexGuard<'static, ()> {
+    static ENV_LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+    ENV_LOCK.get_or_init(|| Mutex::new(())).lock().unwrap()
+}
 
 fn temp_file(path: &Path, contents: &str) {
     if let Some(parent) = path.parent() {
@@ -11,6 +17,7 @@ fn temp_file(path: &Path, contents: &str) {
 
 #[test]
 fn loads_default_configuration() {
+    let _guard = env_guard();
     std::env::remove_var("CORE_CONFIG");
     let config = AppConfig::load().expect("configuration loads");
     assert_eq!(config.server.port, 3333);
@@ -20,6 +27,7 @@ fn loads_default_configuration() {
 
 #[test]
 fn loads_configuration_from_file() {
+    let _guard = env_guard();
     let path = Path::new("/tmp/core-config.cfg");
     temp_file(
         path,
@@ -38,6 +46,7 @@ fn loads_configuration_from_file() {
 
 #[test]
 fn rejects_invalid_configuration() {
+    let _guard = env_guard();
     let path = Path::new("/tmp/core-config-invalid.cfg");
     temp_file(path, "not-valid-line");
     std::env::set_var("CORE_CONFIG", path);
@@ -48,6 +57,7 @@ fn rejects_invalid_configuration() {
 
 #[test]
 fn missing_file_returns_error() {
+    let _guard = env_guard();
     std::env::set_var("CORE_CONFIG", "/tmp/does-not-exist");
     let err = AppConfig::load().unwrap_err();
     std::env::remove_var("CORE_CONFIG");
