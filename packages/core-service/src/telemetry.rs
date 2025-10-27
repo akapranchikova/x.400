@@ -1,24 +1,26 @@
 use std::collections::VecDeque;
+use std::fmt;
 use std::fs::{self, OpenOptions};
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, SystemTime};
 
-use async_trait::async_trait;
 use once_cell::sync::OnceCell;
 use opentelemetry::global;
+use opentelemetry::trace::TracerProvider;
 use opentelemetry::KeyValue;
-use opentelemetry_sdk::export::trace::{ExportResult, SpanData, SpanExporter};
+use opentelemetry_sdk::export::trace::{BoxFuture, ExportResult, SpanData, SpanExporter};
 use opentelemetry_sdk::trace::{self, Tracer};
 use opentelemetry_sdk::Resource;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use tracing::warn;
-use tracing_appender::non_blocking::{self, WorkerGuard};
+use tracing_appender::non_blocking::WorkerGuard;
 use tracing_opentelemetry::OpenTelemetryLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
+use zip::result::ZipError;
 use zip::write::FileOptions;
 
 use crate::config::TelemetryConfig;
@@ -29,6 +31,8 @@ pub enum TelemetryError {
     Io(#[from] io::Error),
     #[error("failed to initialise tracing: {0}")]
     Install(&'static str),
+    #[error("telemetry archive failure: {0}")]
+    Archive(#[from] ZipError),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -117,7 +121,7 @@ impl TelemetryManager {
             .create(true)
             .append(true)
             .open(&self.inner.log_path)?;
-        let (writer, guard) = non_blocking(file);
+        let (writer, guard) = tracing_appender::non_blocking(file);
         self.inner.guard.get_or_init(|| guard);
 
         let exporter = FileSpanExporter {
@@ -330,34 +334,42 @@ struct FileSpanExporter {
     manager: TelemetryManager,
 }
 
-#[async_trait]
+impl fmt::Debug for FileSpanExporter {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("FileSpanExporter").finish()
+    }
+}
+
 impl SpanExporter for FileSpanExporter {
-    async fn export(&mut self, batch: Vec<SpanData>) -> ExportResult {
-        if !self.manager.inner.config.enabled {
-            return Ok(());
-        }
-        for span in batch {
-            let mut event = TelemetryEvent {
-                flow: span.name.clone(),
-                latency_ms: span
-                    .end_time
-                    .duration_since(span.start_time)
-                    .unwrap_or_default()
-                    .as_millis(),
-                success: true,
-                timestamp: now_millis(),
-            };
-            event.flow = redact(event.flow);
-            if let Err(err) = self.manager.append_event(&event) {
-                warn!(target = "telemetry", "failed to export span: {err}");
+    fn export(&mut self, batch: Vec<SpanData>) -> BoxFuture<'static, ExportResult> {
+        let manager = self.manager.clone();
+        Box::pin(async move {
+            if !manager.inner.config.enabled {
+                return Ok(());
             }
-            self.manager.push_event(event);
-        }
-        Ok(())
+            for span in batch {
+                let mut event = TelemetryEvent {
+                    flow: span.name.to_string(),
+                    latency_ms: span
+                        .end_time
+                        .duration_since(span.start_time)
+                        .unwrap_or_default()
+                        .as_millis(),
+                    success: true,
+                    timestamp: now_millis(),
+                };
+                event.flow = redact(event.flow);
+                if let Err(err) = manager.append_event(&event) {
+                    warn!(target = "telemetry", "failed to export span: {err}");
+                }
+                manager.push_event(event);
+            }
+            Ok(())
+        })
     }
 
-    async fn shutdown(&mut self) -> ExportResult {
-        Ok(())
+    fn shutdown(&mut self) -> BoxFuture<'static, ExportResult> {
+        Box::pin(async { Ok(()) })
     }
 }
 

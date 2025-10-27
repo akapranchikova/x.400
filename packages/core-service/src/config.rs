@@ -338,7 +338,7 @@ impl Default for DirectoryCacheConfig {
         }
     }
 }
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct TelemetryConfig {
     pub enabled: bool,
     pub endpoint: Option<String>,
