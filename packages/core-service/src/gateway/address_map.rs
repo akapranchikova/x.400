@@ -260,8 +260,8 @@ mod tests {
         #[test]
         fn rule_application_is_ascii_safe(
             country in "[A-Z]{2}",
-            organization in "[A-Za-z\s]{1,12}",
-            surname in "[A-Za-z\s]{1,12}"
+            organization in r"[A-Za-z\s]{1,12}",
+            surname in r"[A-Za-z\s]{1,12}"
         ) {
             let rule = AddressMappingRule::new("{S}.{O}@gateway.{C}.example");
             let address = Address { country: country.clone(), organization: organization.clone(), surname: surname.clone() };
