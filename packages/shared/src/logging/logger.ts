@@ -1,13 +1,21 @@
 import pino, { Logger, LoggerOptions } from 'pino';
 
+const resolveLogLevel = (): string => {
+  if (typeof process !== 'undefined' && process.env?.X400_LOG_LEVEL) {
+    return process.env.X400_LOG_LEVEL;
+  }
+
+  return 'info';
+};
+
 const baseConfig: LoggerOptions = {
-  level: process.env.X400_LOG_LEVEL || 'info',
+  level: resolveLogLevel(),
   redact: {
     paths: ['headers.authorization', 'attachments', 'envelope.to', 'envelope.cc', 'envelope.bcc'],
-    censor: '[REDACTED]'
+    censor: '[REDACTED]',
   },
   messageKey: 'message',
-  timestamp: pino.stdTimeFunctions.isoTime
+  timestamp: pino.stdTimeFunctions.isoTime,
 };
 
 let rootLogger: Logger | undefined;
