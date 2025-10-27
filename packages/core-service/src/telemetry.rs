@@ -3,6 +3,7 @@ use std::fmt;
 use std::fs::{self, OpenOptions};
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
+use std::pin::Pin;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, SystemTime};
 
@@ -342,32 +343,43 @@ impl fmt::Debug for FileSpanExporter {
 }
 
 impl SpanExporter for FileSpanExporter {
-    fn export(&mut self, batch: Vec<SpanData>) -> ExportResult {
-        if !self.manager.inner.config.enabled {
-            return Ok(());
-        }
-        for span in batch {
-            let mut event = TelemetryEvent {
-                flow: span.name.to_string(),
-                latency_ms: span
-                    .end_time
-                    .duration_since(span.start_time)
-                    .unwrap_or_default()
-                    .as_millis(),
-                success: true,
-                timestamp: now_millis(),
-            };
-            event.flow = redact(event.flow);
-            if let Err(err) = self.manager.append_event(&event) {
-                warn!(target = "telemetry", "failed to export span: {err}");
+    fn export(
+        &mut self,
+        batch: Vec<SpanData>,
+    ) -> Pin<Box<dyn std::future::Future<Output = ExportResult> + Send + 'static>> {
+        let manager = self.manager.clone();
+
+        Box::pin(async move {
+            if !manager.inner.config.enabled {
+                return Ok(());
             }
-            self.manager.push_event(event);
-        }
-        Ok(())
+
+            for span in batch {
+                let mut event = TelemetryEvent {
+                    flow: span.name.to_string(),
+                    latency_ms: span
+                        .end_time
+                        .duration_since(span.start_time)
+                        .unwrap_or_default()
+                        .as_millis(),
+                    success: true,
+                    timestamp: now_millis(),
+                };
+                event.flow = redact(event.flow);
+                if let Err(err) = manager.append_event(&event) {
+                    warn!(target = "telemetry", "failed to export span: {err}");
+                }
+                manager.push_event(event);
+            }
+
+            Ok(())
+        })
     }
 
-    fn shutdown(&mut self) {
-        // nothing to clean up
+    fn shutdown(
+        &mut self,
+    ) -> Pin<Box<dyn std::future::Future<Output = ExportResult> + Send + 'static>> {
+        Box::pin(async { Ok(()) })
     }
 }
 
