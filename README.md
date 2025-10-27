@@ -141,6 +141,7 @@ Key variables shipped in [`.env.example`](./.env.example):
 | `X400_MODE`                       | `mock`                  | CLI, SDK wrapper                             |
 | `CLI_DEFAULT_PROFILE`             | `default`               | CLI `env` sanity command                     |
 | `TAURI_DEV_HOST`                  | `http://localhost:1420` | Desktop shell / Tauri dev server             |
+| `VITE_INLINE_EXECUTION`           | `true`                  | UI transport (enables inline mock data)      |
 
 See [docs/environment.md](packages/docs/docs/environment.md) for the full catalog and CI behaviour notes.
 

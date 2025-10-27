@@ -22,9 +22,10 @@ The `env:copy` script copies `.env.example` to `.env` when the file does not yet
 
 ### UI / Tauri
 
-| Variable         | Default                 | Purpose                                                    |
-| ---------------- | ----------------------- | ---------------------------------------------------------- |
-| `TAURI_DEV_HOST` | `http://localhost:1420` | Host exposed by the desktop shell during local development |
+| Variable                | Default                 | Purpose                                                    |
+| ----------------------- | ----------------------- | ---------------------------------------------------------- |
+| `TAURI_DEV_HOST`        | `http://localhost:1420` | Host exposed by the desktop shell during local development |
+| `VITE_INLINE_EXECUTION` | `true`                  | Enables the inline mock transport for the web UI           |
 
 ### Core service
 
