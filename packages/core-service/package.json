@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "cargo run",
+    "dev": "node ../../scripts/cargo-run.mjs",
     "build": "cargo build --release",
     "test": "cargo test",
     "gateway-tests": "cargo test gateway",
