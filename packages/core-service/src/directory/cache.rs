@@ -18,7 +18,7 @@ impl DirectoryCache {
             entries: HashMap::new(),
             order: VecDeque::new(),
             ttl: Duration::from_secs(ttl_seconds.max(1)),
-            capacity: capacity.max(8),
+            capacity: capacity.max(1),
         }
     }
 
