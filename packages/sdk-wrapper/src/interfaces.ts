@@ -113,4 +113,5 @@ export interface TransportOptions {
   timeoutMs?: number;
   retries?: number;
   mode?: 'mock' | 'sdk';
+  inlineExecution?: boolean;
 }
