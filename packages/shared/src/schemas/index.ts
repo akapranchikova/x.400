@@ -3,3 +3,5 @@ export * from './folders';
 export * from './messages';
 export * from './reports';
 export * from './migration';
+export * from './directory';
+export * from './gateway';
