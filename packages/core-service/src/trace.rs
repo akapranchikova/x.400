@@ -1,6 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use crate::models::MessageId;
+use tracing::info;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TraceEntry {
@@ -25,6 +26,7 @@ impl TraceManager {
                 message,
             });
         }
+        info!(target = "trace", message = %message, "trace event recorded");
     }
 
     pub fn bundle(&self) -> Vec<TraceEntry> {

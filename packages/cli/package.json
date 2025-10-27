@@ -35,9 +35,11 @@
     "@x400/sdk-wrapper": "workspace:*",
     "@x400/shared": "workspace:*",
     "commander": "^11.1.0",
-    "kleur": "^4.1.5"
+    "kleur": "^4.1.5",
+    "yazl": "^2.5.1"
   },
   "devDependencies": {
+    "@types/yazl": "^2.4.2",
     "@vitest/coverage-v8": "^1.2.2",
     "vitest": "^1.2.2",
     "typescript": "^5.6.3"

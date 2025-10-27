@@ -15,8 +15,14 @@ nav:
   - CLI Reference (FW_SI compatibility): docs/cli.md
   - Legacy CLI Appendix: docs/cli-reference.md
   - Testing Guide: docs/testing.md
+  - Telemetry & Diagnostics Testing: docs/testing-telemetry-support.md
   - Security Model: docs/security-model.md
   - Migration Runbook (FWM/FWZ): docs/migration.md
+  - Release Process: docs/release-process.md
+  - Telemetry & Observability: docs/telemetry.md
+  - Support Toolkit: docs/support.md
+  - Support Runbook: docs/support-runbook.md
+  - Error Reference: docs/errors.md
   - Roadmap & Status: docs/roadmap.md
 
 theme:

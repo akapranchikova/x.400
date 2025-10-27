@@ -3,6 +3,7 @@ use crate::gateway::imap_client::{GatewayImapClient, InboundMessage};
 use crate::gateway::report_map::{DeliveryReport, ReportMapper};
 use crate::gateway::smtp_client::{GatewaySmtpClient, SmtpError, SmtpMessage, SmtpSendOutcome};
 use crate::models::Address;
+use tracing::instrument;
 
 /// Error returned by the high level gateway adapter when an operation fails.
 #[derive(Debug, thiserror::Error, PartialEq, Eq)]
@@ -55,6 +56,7 @@ impl GatewayAdapter {
     }
 
     /// Map an O/R message to SMTP and send it over the relay.
+    #[instrument(name = "gateway.outbound", skip(self, recipients, subject, body))]
     pub fn outbound(
         &self,
         _originator: &Address,
@@ -82,24 +84,28 @@ impl GatewayAdapter {
     }
 
     /// Fetch inbound SMTP messages for conversion to X.400.
+    #[instrument(name = "gateway.inbound", skip(self))]
     pub fn inbound(&self, limit: usize) -> GatewayEvent {
         let messages = self.imap.fetch(limit);
         GatewayEvent::InboundReady(messages)
     }
 
     /// Convert a DSN payload to the internal delivery report.
+    #[instrument(name = "gateway.dsn", skip(self, payload))]
     pub fn handle_dsn(&self, payload: &str, correlation_id: &str) -> GatewayEvent {
         let report = self.reports.from_dsn(payload, correlation_id);
         GatewayEvent::ReportMapped(report)
     }
 
     /// Convert an MDN payload to the internal representation.
+    #[instrument(name = "gateway.mdn", skip(self, payload))]
     pub fn handle_mdn(&self, payload: &str, correlation_id: &str) -> GatewayEvent {
         let report = self.reports.from_mdn(payload, correlation_id);
         GatewayEvent::ReportMapped(report)
     }
 
     /// Perform reverse address translation when ingesting SMTP messages.
+    #[instrument(name = "gateway.map_sender", skip(self))]
     pub fn map_sender(&self, address: &str) -> Result<Address, GatewayError> {
         let mapped = self.mapper.map_rfc822_to_or(address)?;
         Ok(mapped)

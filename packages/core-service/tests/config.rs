@@ -23,6 +23,8 @@ fn loads_default_configuration() {
     assert_eq!(config.server.port, 3333);
     assert_eq!(config.server.host, "127.0.0.1");
     assert_eq!(config.migration.workspace, "workspace/migration");
+    assert!(!config.telemetry.enabled);
+    assert_eq!(config.telemetry.local_path, "telemetry");
 }
 
 #[test]
@@ -31,7 +33,7 @@ fn loads_configuration_from_file() {
     let path = Path::new("/tmp/core-config.cfg");
     temp_file(
         path,
-        "server.port=4444\nserver.host=0.0.0.0\ndatabase.path=/tmp/messages.db\nmigration.workspace=/data/work\nmigration.quarantine=/data/quarantine\nmigration.parallelism=8\n",
+        "server.port=4444\nserver.host=0.0.0.0\ndatabase.path=/tmp/messages.db\nmigration.workspace=/data/work\nmigration.quarantine=/data/quarantine\nmigration.parallelism=8\ntelemetry.enabled=true\ntelemetry.endpoint=https://telemetry.example.com\ntelemetry.localPath=/var/telemetry\ntelemetry.sampling=0.25\ntelemetry.retentionDays=30\n",
     );
     std::env::set_var("CORE_CONFIG", path);
     let config = AppConfig::load().expect("configuration loads from file");
@@ -42,6 +44,14 @@ fn loads_configuration_from_file() {
     assert_eq!(config.migration.workspace, "/data/work");
     assert_eq!(config.migration.quarantine, "/data/quarantine");
     assert_eq!(config.migration.parallelism, 8);
+    assert!(config.telemetry.enabled);
+    assert_eq!(
+        config.telemetry.endpoint,
+        Some("https://telemetry.example.com".to_string())
+    );
+    assert_eq!(config.telemetry.local_path, "/var/telemetry");
+    assert!((config.telemetry.sampling - 0.25).abs() < f32::EPSILON);
+    assert_eq!(config.telemetry.retention_days, 30);
 }
 
 #[test]

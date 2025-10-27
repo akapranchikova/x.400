@@ -6,12 +6,16 @@ pub mod mock_provider;
 pub mod models;
 pub mod queue;
 pub mod store;
+pub mod support;
+pub mod telemetry;
 pub mod trace;
 
 use std::sync::Arc;
 
 use queue::QueueManager;
 use store::StoreManager;
+use support::SupportStorage;
+use telemetry::TelemetryManager;
 use trace::TraceManager;
 
 /// Shared state for the simplified core service.
@@ -22,15 +26,19 @@ pub struct AppState {
     pub trace: TraceManager,
     pub config: Arc<config::AppConfig>,
     pub migration: migration::MigrationManager,
+    pub telemetry: TelemetryManager,
+    pub support: SupportStorage,
 }
 
 impl AppState {
     pub fn new(config: config::AppConfig) -> Self {
-        let queue = QueueManager::new();
+        let telemetry = TelemetryManager::from_config(&config.telemetry);
+        let queue = QueueManager::with_telemetry(telemetry.clone());
         let store = StoreManager::new();
         let trace = TraceManager::new();
         let config = Arc::new(config);
         let migration = migration::MigrationManager::new(store.clone());
+        let support = SupportStorage::new(".");
 
         Self {
             queue,
@@ -38,6 +46,8 @@ impl AppState {
             trace,
             config,
             migration,
+            telemetry,
+            support,
         }
     }
 }

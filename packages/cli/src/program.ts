@@ -4,7 +4,12 @@ import {
 } from '@x400/sdk-wrapper';
 import { ENV, delay, migrationRequestSchema } from '@x400/shared';
 import { Command } from 'commander';
+import { createWriteStream, promises as fs } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { pipeline } from 'node:stream/promises';
 import { green, yellow } from 'kleur/colors';
+import { ZipFile } from 'yazl';
 
 import { parseOrAddress, parseOrAddresses } from './utils';
 
@@ -19,6 +24,15 @@ type Handler<T> = (context: {
 
 type ProgramFactoryOptions = {
   createTransport?: TransportFactory;
+};
+
+const fileExists = async (target: string) => {
+  try {
+    await fs.access(target);
+    return true;
+  } catch (error) {
+    return false;
+  }
 };
 
 export const buildProgram = ({
@@ -204,6 +218,74 @@ export const buildProgram = ({
           ),
         );
       });
+    });
+
+  const support = program.command('support').description('Support and diagnostics tooling');
+
+  support
+    .command('trace')
+    .description('Collect telemetry and create a diagnostics bundle')
+    .option('--output <file>', 'Output path for the bundle', 'support/trace-bundle.zip')
+    .option('--telemetry-dir <path>', 'Telemetry directory', 'telemetry')
+    .option('--endpoint <url>', 'Support upload endpoint')
+    .option('--upload', 'Upload bundle to the support endpoint', false)
+    .action(async (cmdOptions) => {
+      const options = program.opts<GlobalOptions>();
+      const telemetryDir = path.resolve(cmdOptions.telemetryDir ?? 'telemetry');
+      const bundlePath = path.resolve(cmdOptions.output ?? 'support/trace-bundle.zip');
+
+      await fs.mkdir(path.dirname(bundlePath), { recursive: true });
+
+      const zip = new ZipFile();
+      const metadata = {
+        createdAt: new Date().toISOString(),
+        hostname: os.hostname(),
+        platform: os.platform(),
+        release: os.release(),
+        telemetryDir,
+        cliVersion: program.version(),
+        baseUrl: options.baseUrl,
+      };
+      zip.addBuffer(Buffer.from(JSON.stringify(metadata, null, 2)), 'metadata.json');
+
+      const tracePath = path.join(telemetryDir, 'trace.jsonl');
+      if (await fileExists(tracePath)) {
+        zip.addFile(tracePath, 'trace.jsonl');
+      }
+
+      const snapshotPath = path.join(telemetryDir, 'snapshot.json');
+      if (await fileExists(snapshotPath)) {
+        zip.addFile(snapshotPath, 'snapshot.json');
+      }
+
+      const outputStream = createWriteStream(bundlePath);
+      const piping = pipeline(zip.outputStream, outputStream);
+      zip.end();
+      await piping;
+
+      console.log(green(`Diagnostics bundle written to ${bundlePath}`));
+
+      if (cmdOptions.upload) {
+        const endpoint =
+          cmdOptions.endpoint ?? `${options.baseUrl.replace(/\/$/, '')}/support/upload`;
+        const data = await fs.readFile(bundlePath);
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/zip',
+            'x-support-channel': 'cli',
+          },
+          body: data,
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            `Failed to upload support bundle: ${response.status} ${response.statusText}`,
+          );
+        }
+
+        console.log(green(`Bundle uploaded to ${endpoint}`));
+      }
     });
 
   program

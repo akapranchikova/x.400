@@ -6,6 +6,8 @@ interface StatusBarProps {
   status: IServiceStatus | null;
   gatewayMapping: { input: string; mapped: string; warnings: string[] } | null;
   directoryReady: boolean;
+  telemetryEnabled: boolean;
+  onDiagnostics: () => void;
 }
 
 const describeTls = (status: IServiceStatus | null) => {
@@ -25,6 +27,8 @@ export const StatusBar = ({
   status,
   gatewayMapping,
   directoryReady,
+  telemetryEnabled,
+  onDiagnostics,
 }: StatusBarProps) => {
   const modeLabel = status ? `Mode: ${status.transportMode.toUpperCase()}` : 'Mode: resolving…';
   const tlsLabel = describeTls(status);
@@ -45,7 +49,15 @@ export const StatusBar = ({
         <span>{smimeLabel}</span>
         <span>{gatewayLabel}</span>
         <span>{directoryLabel}</span>
+        <span>Telemetry: {telemetryEnabled ? 'enabled' : 'disabled'}</span>
         <span>Last sync: {lastSync ? lastSync.toLocaleTimeString() : 'Waiting…'}</span>
+        <button
+          type="button"
+          onClick={onDiagnostics}
+          className="mt-1 inline-flex items-center justify-center rounded border border-slate-300 px-2 py-1 text-[11px] font-medium text-slate-600 hover:bg-slate-100"
+        >
+          Open diagnostics
+        </button>
       </div>
     </div>
   );
