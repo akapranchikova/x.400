@@ -1,0 +1,25 @@
+[package]
+name = "core-service-fuzz"
+version = "0.0.0"
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+
+[dependencies.core-service]
+path = ".."
+
+[[bin]]
+name = "address_map"
+path = "fuzz_targets/address_map.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "fwm_parser"
+path = "fuzz_targets/fwm_parser.rs"
+test = false
+doc = false

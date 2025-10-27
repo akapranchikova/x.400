@@ -203,6 +203,7 @@ impl AddressMapper {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use proptest::prelude::*;
 
     fn sample_address() -> Address {
         Address {
@@ -253,5 +254,22 @@ mod tests {
         assert_eq!(address.country, "DE");
         assert_eq!(address.organization, "Bundespost");
         assert_eq!(address.surname, "Mueller");
+    }
+
+    proptest! {
+        #[test]
+        fn rule_application_is_ascii_safe(
+            country in "[A-Z]{2}",
+            organization in "[A-Za-z\s]{1,12}",
+            surname in "[A-Za-z\s]{1,12}"
+        ) {
+            let rule = AddressMappingRule::new("{S}.{O}@gateway.{C}.example");
+            let address = Address { country: country.clone(), organization: organization.clone(), surname: surname.clone() };
+            let email = rule.apply(&address).unwrap();
+            prop_assert!(email.chars().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || [ '@', '.', '-' ].contains(&c)));
+            let inverted = rule.invert(&email).unwrap();
+            prop_assert!(!inverted.country.is_empty());
+            prop_assert!(!inverted.surname.is_empty());
+        }
     }
 }

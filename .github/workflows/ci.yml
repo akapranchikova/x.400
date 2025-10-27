@@ -95,6 +95,129 @@ jobs:
       - name: Run workspace tests
         run: pnpm test:all
 
+  coverage-ts:
+    name: TypeScript coverage
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Run TS coverage suite
+        run: pnpm test:cov
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ts-coverage-reports
+          path: |
+            apps/ui-client/coverage
+            packages/cli/coverage
+            packages/sdk-wrapper/coverage
+            packages/shared/coverage
+          if-no-files-found: error
+
+  coverage-rust:
+    name: Rust coverage
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install cargo-llvm-cov
+        run: cargo install cargo-llvm-cov --locked
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Generate Rust coverage report
+        run: pnpm --filter @x400/core-service run coverage
+      - name: Upload Rust coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: rust-coverage
+          path: packages/core-service/coverage
+          if-no-files-found: error
+
+  mutation:
+    name: Mutation testing
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Run mutation harness
+        run: pnpm test:mut
+
+  fuzz-smoke:
+    name: Fuzz smoke tests
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install cargo-fuzz
+        run: cargo install cargo-fuzz --locked
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Run fuzz smoke
+        run: pnpm --filter @x400/core-service run fuzz:smoke
+      - name: Upload fuzz artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-artifacts
+          path: packages/core-service/fuzz/artifacts
+          if-no-files-found: ignore
+
+  contract-check:
+    name: Contract drift check
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Verify OpenAPI contract hash
+        run: pnpm contract:check
+
   e2e:
     name: Playwright end-to-end tests
     needs: build
@@ -133,6 +256,39 @@ jobs:
         with:
           name: playwright-report-${{ matrix.os }}
           path: playwright-report
+          if-no-files-found: ignore
+
+  e2e-visual-a11y:
+    name: Visual & a11y regression
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps
+      - name: Run visual regression suite
+        run: pnpm e2e:vr
+      - name: Run accessibility suite
+        run: pnpm e2e:a11y
+      - name: Upload Playwright artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-visual-a11y
+          path: |
+            playwright-report
+            apps/ui-client/e2e/__screenshots__
+            apps/ui-client/e2e/__snapshots__
           if-no-files-found: ignore
 
   audit:

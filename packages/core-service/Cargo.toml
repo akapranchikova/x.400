@@ -29,4 +29,10 @@ opentelemetry = { version = "0.21", features = ["trace"] }
 opentelemetry_sdk = { version = "0.21", features = ["rt-tokio", "trace"] }
 
 [dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+proptest = "1.4"
 tempfile = "3"
+
+[[bench]]
+name = "address_map"
+harness = false
