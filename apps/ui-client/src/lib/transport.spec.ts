@@ -15,7 +15,13 @@ vi.mock(
 
 type EnvSnapshot = Partial<Record<string, string | undefined>>;
 
-const keys: (keyof EnvSnapshot)[] = ['CORE_IPC_HOST', 'CORE_IPC_PORT', 'CORE_IPC_SCHEME'];
+const keys: (keyof EnvSnapshot)[] = [
+  'CORE_IPC_HOST',
+  'CORE_IPC_PORT',
+  'CORE_IPC_SCHEME',
+  'VITE_INLINE_EXECUTION',
+  'INLINE_EXECUTION',
+];
 
 const captureEnv = (): EnvSnapshot => {
   const snapshot: EnvSnapshot = {};
@@ -62,5 +68,41 @@ describe('resolveIpcBaseUrl', () => {
     vi.resetModules();
     const module = await import('./transport');
     expect(module.resolveIpcBaseUrl()).toBe('https://0.0.0.0:4510');
+  });
+});
+
+describe('resolveInlineExecution', () => {
+  const snapshot = captureEnv();
+
+  afterEach(() => {
+    restoreEnv(snapshot);
+    vi.resetModules();
+  });
+
+  it('defaults to true when no overrides exist', async () => {
+    for (const key of keys) {
+      delete process.env[key];
+    }
+
+    vi.resetModules();
+    const module = await import('./transport');
+    expect(module.resolveInlineExecution()).toBe(true);
+  });
+
+  it('prefers VITE_INLINE_EXECUTION when provided', async () => {
+    process.env.VITE_INLINE_EXECUTION = 'false';
+
+    vi.resetModules();
+    const module = await import('./transport');
+    expect(module.resolveInlineExecution()).toBe(false);
+  });
+
+  it('falls back to INLINE_EXECUTION when provided', async () => {
+    delete process.env.VITE_INLINE_EXECUTION;
+    process.env.INLINE_EXECUTION = 'no';
+
+    vi.resetModules();
+    const module = await import('./transport');
+    expect(module.resolveInlineExecution()).toBe(false);
   });
 });

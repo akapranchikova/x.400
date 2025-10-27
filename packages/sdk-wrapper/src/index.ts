@@ -1,9 +1,11 @@
+import { createInlineTransport } from './inline';
 import { createMockTransport } from './mock';
 import { createSdkTransport } from './sdk';
 
 import type { TransportFactory, TransportOptions } from './interfaces';
 
 export * from './interfaces';
+export * from './inline';
 export * from './mock';
 export * from './sdk';
 
@@ -23,9 +25,14 @@ const resolveEnvMode = (): 'mock' | 'sdk' => {
 };
 
 export const createTransport: TransportFactory = (options: TransportOptions = {}) => {
-  const mode = options.mode ?? resolveEnvMode();
-  if (mode === 'sdk') {
-    return createSdkTransport({ ...options, mode });
+  const { inlineExecution, ...rest } = options;
+  if (inlineExecution) {
+    return createInlineTransport({ ...rest, mode: 'mock' });
   }
-  return createMockTransport({ ...options, mode: 'mock' });
+
+  const mode = rest.mode ?? resolveEnvMode();
+  if (mode === 'sdk') {
+    return createSdkTransport({ ...rest, mode });
+  }
+  return createMockTransport({ ...rest, mode: 'mock' });
 };
