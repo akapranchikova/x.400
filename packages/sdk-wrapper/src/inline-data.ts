@@ -17,6 +17,7 @@ export const inlineMessages: Message[] = [
         orName: {
           c: 'DE',
           o: 'Modernization',
+          ou: [],
           surname: 'Operator',
         },
         dda: [],
@@ -27,6 +28,7 @@ export const inlineMessages: Message[] = [
           orName: {
             c: 'DE',
             o: 'Modernization',
+            ou: [],
             surname: 'Operator',
           },
           dda: [],
@@ -57,6 +59,7 @@ export const inlineMessages: Message[] = [
           orName: {
             c: 'DE',
             o: 'Modernization',
+            ou: [],
             surname: 'Operator',
           },
           dda: [],
@@ -72,6 +75,7 @@ export const inlineMessages: Message[] = [
           orName: {
             c: 'DE',
             o: 'Modernization',
+            ou: [],
             surname: 'Operator',
           },
           dda: [],
