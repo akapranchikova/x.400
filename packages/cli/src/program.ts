@@ -1,13 +1,14 @@
+import { createWriteStream, promises as fs } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { pipeline } from 'node:stream/promises';
+
 import {
   createTransport as createSdkAwareTransport,
   type TransportFactory,
 } from '@x400/sdk-wrapper';
 import { ENV, delay, migrationRequestSchema } from '@x400/shared';
 import { Command } from 'commander';
-import { createWriteStream, promises as fs } from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
-import { pipeline } from 'node:stream/promises';
 import { green, yellow } from 'kleur/colors';
 import { ZipFile } from 'yazl';
 
@@ -30,7 +31,7 @@ const fileExists = async (target: string) => {
   try {
     await fs.access(target);
     return true;
-  } catch (error) {
+  } catch {
     return false;
   }
 };
