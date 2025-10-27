@@ -1,8 +1,10 @@
+use chrono::Utc;
 use core_service::config::AppConfig;
 use core_service::mock_provider::MockDeliveryProvider;
 use core_service::models::{Address, Message, MessageContent, MessageEnvelope, MessageStatus};
 use core_service::queue::QueueManager;
 use core_service::store::StoreManager;
+use core_service::support::{SupportMetadata, SupportStorage};
 use core_service::trace::TraceManager;
 
 fn build_state() -> (QueueManager, StoreManager, TraceManager) {
@@ -79,4 +81,21 @@ fn seeding_demo_data_populates_store_and_queue() {
     assert!(bundle
         .iter()
         .any(|entry| entry.event == "mock.read" && entry.message == id));
+}
+
+#[test]
+fn support_storage_persists_trace_bundle() {
+    let temp = tempfile::tempdir().expect("tempdir");
+    let storage = SupportStorage::new(temp.path());
+    let metadata = SupportMetadata {
+        reporter: "ui-client".into(),
+        channel: "ui".into(),
+        created_at: Utc::now(),
+        notes: Some("integration".into()),
+    };
+    let bundle = vec![1, 2, 3, 4];
+    let path = storage.store(&bundle, &metadata).expect("stored");
+    assert!(path.exists());
+    let siblings = storage.list().expect("list");
+    assert_eq!(siblings.len(), 1);
 }

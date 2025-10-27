@@ -18,6 +18,7 @@ use crate::models::{
     MessageStatus,
 };
 use crate::store::StoreManager;
+use tracing::instrument;
 
 /// Errors that can occur during migration.
 #[derive(Debug, Error)]
@@ -163,6 +164,7 @@ fn parse_address(input: &str) -> Option<Address> {
 }
 
 /// Decode a legacy FileWork metadata document.
+#[instrument(name = "migration.parse_fwm", skip(bytes))]
 pub fn parse_fwm(bytes: &[u8]) -> Result<FwmDocument, MigrationError> {
     if bytes.is_empty() {
         return Err(MigrationError::EmptyDocument);
@@ -366,6 +368,7 @@ impl MigrationManager {
 
     /// Launch a migration job. The processing is synchronous for the mock implementation,
     /// but the job bookkeeping mirrors an asynchronous interface for consumers.
+    #[instrument(name = "migration.import", skip(self, request))]
     pub fn import(&self, request: MigrationRequest) -> Result<Uuid, MigrationError> {
         if let Some(resume) = request.resume {
             if self.jobs.lock().unwrap().contains_key(&resume) {
@@ -412,6 +415,7 @@ impl MigrationManager {
         Ok(job_id)
     }
 
+    #[instrument(name = "migration.process_job", skip(self))]
     fn process_job(&self, job_id: Uuid) -> Result<(), MigrationError> {
         let request;
         {
@@ -531,6 +535,7 @@ impl MigrationManager {
         Ok(())
     }
 
+    #[instrument(name = "migration.update_progress", skip(self, path))]
     fn update_progress(
         &self,
         job_id: Uuid,
@@ -550,6 +555,7 @@ impl MigrationManager {
         Ok(())
     }
 
+    #[instrument(name = "migration.import_document", skip(self, document))]
     fn import_document(
         &self,
         document: &FwmDocument,
@@ -585,6 +591,7 @@ impl MigrationManager {
         Ok(ImportResult { is_duplicate })
     }
 
+    #[instrument(name = "migration.resolve_documents", skip(self, request))]
     fn resolve_documents(
         &self,
         request: &MigrationRequest,

@@ -1,0 +1,34 @@
+{
+  "name": "@x400/support-tool",
+  "version": "0.1.0",
+  "description": "Support diagnostics helper for analyzing X.400 trace bundles",
+  "license": "MIT",
+  "bin": {
+    "x400-support": "dist/index.js"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "eslint 'src/**/*.{ts,tsx}'",
+    "test": "vitest run",
+    "coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "jszip": "^3.10.1",
+    "kleur": "^4.1.5",
+    "yargs": "^17.7.2"
+  },
+  "devDependencies": {
+    "@types/jszip": "^3.1.0",
+    "@types/node": "^20.11.30",
+    "@types/yargs": "^17.0.32",
+    "typescript": "^5.6.3",
+    "vitest": "^1.2.2"
+  }
+}

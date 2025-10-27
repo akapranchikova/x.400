@@ -118,3 +118,4 @@ Artifacts: Playwright reports (`playwright-report/`) upload on failures, and the
 - Shared fixtures live under `test/fixtures/` and are consumed by Playwright and Rust tests.
 - Use `pnpm --filter <package>` to run targeted tasks.
 - When adding new IPC endpoints, update `packages/core-service/api/openapi.json` and the contract tests in `packages/sdk-wrapper/src/contract.spec.ts`.
+- See [`packages/docs/docs/testing-telemetry-support.md`](packages/docs/docs/testing-telemetry-support.md) for telemetry-specific test scenarios and privacy validation steps.

@@ -50,13 +50,14 @@ impl Default for DatabaseConfig {
 }
 
 /// Aggregated application configuration.
-#[derive(Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct AppConfig {
     pub server: ServerConfig,
     pub database: DatabaseConfig,
     pub migration: MigrationConfig,
     pub gateway: GatewayConfig,
     pub directory: DirectoryConfig,
+    pub telemetry: TelemetryConfig,
 }
 
 /// Migration related configuration.
@@ -114,6 +115,27 @@ impl AppConfig {
                 }
                 "server.host" => {
                     result.server.host = value.to_string();
+                }
+                "telemetry.enabled" => {
+                    result.telemetry.enabled = matches!(value, "true" | "1" | "yes" | "on");
+                }
+                "telemetry.endpoint" => {
+                    result.telemetry.endpoint = if value.is_empty() {
+                        None
+                    } else {
+                        Some(value.to_string())
+                    };
+                }
+                "telemetry.localPath" => {
+                    result.telemetry.local_path = value.to_string();
+                }
+                "telemetry.sampling" => {
+                    result.telemetry.sampling =
+                        value.parse().map_err(|_| ConfigError::InvalidFormat)?;
+                }
+                "telemetry.retentionDays" => {
+                    result.telemetry.retention_days =
+                        value.parse().map_err(|_| ConfigError::InvalidFormat)?;
                 }
                 "database.path" => {
                     result.database.path = value.to_string();
@@ -313,6 +335,26 @@ impl Default for DirectoryCacheConfig {
         Self {
             ttl_seconds: 300,
             capacity: 512,
+        }
+    }
+}
+#[derive(Clone, Debug, PartialEq)]
+pub struct TelemetryConfig {
+    pub enabled: bool,
+    pub endpoint: Option<String>,
+    pub local_path: String,
+    pub sampling: f32,
+    pub retention_days: u16,
+}
+
+impl Default for TelemetryConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            endpoint: None,
+            local_path: "telemetry".into(),
+            sampling: 1.0,
+            retention_days: 7,
         }
     }
 }

@@ -10,11 +10,12 @@ import { MigrationPanel } from './components/MigrationPanel';
 import { SavedFiltersBar } from './components/SavedFiltersBar';
 import { SettingsPanel } from './components/SettingsPanel';
 import { StatusBar } from './components/StatusBar';
+import { DiagnosticsPanel } from './components/DiagnosticsPanel';
 import { useFolders } from './hooks/useFolders';
 import { useMessages } from './hooks/useMessages';
 import { getTransport } from './lib/transport';
 
-import type { IServiceStatus } from '@x400/sdk-wrapper';
+import type { IServiceStatus, ISession } from '@x400/sdk-wrapper';
 import type { Folder } from '@x400/shared';
 
 const DEFAULT_FOLDER = 'inbox';
@@ -37,9 +38,12 @@ const App = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [migrationOpen, setMigrationOpen] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const [connected, setConnected] = useState(false);
   const [lastSync, setLastSync] = useState<Date | null>(null);
   const [serviceStatus, setServiceStatus] = useState<IServiceStatus | null>(null);
+  const [sessionInfo, setSessionInfo] = useState<ISession | null>(null);
+  const [telemetryAvailable, setTelemetryAvailable] = useState(false);
   const [savedFilters, setSavedFilters] = useState<{ id: string; label: string; query: string }[]>(
     [],
   );
@@ -65,7 +69,8 @@ const App = () => {
     const init = async () => {
       try {
         const transport = getTransport();
-        await transport.connect();
+        const session = await transport.connect();
+        setSessionInfo(session);
         setConnected(true);
         setLastSync(new Date());
         try {
@@ -349,6 +354,8 @@ const App = () => {
             status={serviceStatus}
             gatewayMapping={gatewayMapping}
             directoryReady={directoryReady}
+            telemetryEnabled={telemetryAvailable}
+            onDiagnostics={() => setDiagnosticsOpen(true)}
           />
         </footer>
       </div>
@@ -369,6 +376,13 @@ const App = () => {
         open={advancedOpen}
         onClose={() => setAdvancedOpen(false)}
         onApply={handleAdvancedApply}
+      />
+      <DiagnosticsPanel
+        open={diagnosticsOpen}
+        onClose={() => setDiagnosticsOpen(false)}
+        status={serviceStatus}
+        sessionPeer={sessionInfo?.peer ?? null}
+        onSnapshot={(available) => setTelemetryAvailable(available)}
       />
     </div>
   );

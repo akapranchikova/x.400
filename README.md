@@ -4,6 +4,8 @@
 ![Tests](https://img.shields.io/badge/tests-vitest%20%2B%20cargo-green?style=flat-square)
 ![Coverage](https://img.shields.io/badge/coverage-80%25-blueviolet?style=flat-square)
 ![Docs](https://img.shields.io/badge/docs-mkdocs%20material-informational?style=flat-square)
+![Telemetry](https://img.shields.io/badge/telemetry-opt--in-important?style=flat-square)
+![Release](https://img.shields.io/badge/release-semantic--release-blue?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
 ![pnpm](https://img.shields.io/badge/pnpm-8.x-orange?style=flat-square)
 
@@ -32,6 +34,7 @@ The goal is to provide a secure, cross-platform replacement for legacy X.400 too
 - ✅ SDK-aware transport wrapper with automatic mock/SDK switching
 - ✅ Security hardening hooks: TLS validation, SQLCipher key retrieval, S/MIME scaffolding
 - ✅ FWM/FWZ migration tooling with dry-run, resume, and checksum validation
+- ✅ Telemetry instrumentation with diagnostics panel, CLI bundle export, and support tooling
 
 ## Feature matrix
 
@@ -47,6 +50,7 @@ The goal is to provide a secure, cross-platform replacement for legacy X.400 too
 | S/MIME sign/encrypt/verify scaffolding                         | **Implemented (cert-dependent)**     |
 | Import FWM/FWZ                                                 | **Implemented (dry-run/resume)**     |
 | CLI FW_SI compatibility                                        | **Implemented (see docs/cli.md)**    |
+| Telemetry & diagnostics                                        | 🚧 **Opt-in (UI + CLI bundles)**     |
 
 ## Security & SDK Integration
 
@@ -151,6 +155,7 @@ packages/
   core-service/    Rust IPC service (Axum, sqlx) with mock queues/storage
   sdk-wrapper/     TypeScript interfaces and mock HTTP transport
   cli/             Node.js CLI mirroring FW_SI.EXE verbs
+  support-tool/    CLI for inspecting diagnostics bundles and validating PII redaction
   docs/            MkDocs + Material documentation site
   shared/          Zod schemas, shared types, logging utilities
 ```
@@ -175,3 +180,15 @@ MIT © X.400 Modernization Team.
 
 - Detailed roadmap: [ROADMAP.md](ROADMAP.md)
 - Full documentation site: [`packages/docs`](packages/docs) (serve locally with `pnpm docs:dev`)
+
+## Production Readiness and Support
+
+- Automated release pipeline triggered by semver tags (`.github/workflows/release.yml`) produces
+  signed Tauri bundles, CLI binaries, and Rust artifacts while publishing release notes via
+  `semantic-release`.
+- New diagnostics panel surfaces telemetry metrics, system information, and a one-click support
+  upload workflow in the desktop UI.
+- `x400-cli support trace` and the dedicated `x400-support` utility collect, validate, and analyze
+  trace bundles with PII redaction checks.
+- Comprehensive runbooks cover release management, telemetry configuration, support operations,
+  error codes, and targeted testing (see `packages/docs/docs/*`).

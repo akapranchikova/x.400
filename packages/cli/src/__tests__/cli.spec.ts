@@ -317,6 +317,79 @@ describe('CLI program', () => {
     }
   });
 
+  it('creates diagnostics bundle via support trace command', async () => {
+    const { transport } = createTransportMock();
+    transport.trace.bundle.mockResolvedValue({
+      entries: [
+        {
+          flow: 'gateway.outbound',
+          latency_ms: 12,
+          success: true,
+          timestamp: Date.now(),
+        },
+      ],
+    });
+    const written: string[] = [];
+
+    vi.doMock('node:fs', async () => {
+      const { PassThrough } = await import('node:stream');
+      return {
+        promises: {
+          access: vi.fn().mockRejectedValue(new Error('missing')),
+          mkdir: vi.fn().mockResolvedValue(undefined),
+          readFile: vi.fn().mockResolvedValue(Buffer.alloc(0)),
+        },
+        createWriteStream: vi.fn(() => {
+          const stream = new PassThrough();
+          stream.on('data', (chunk: Buffer) => written.push(chunk.toString()));
+          return stream;
+        }),
+      };
+    });
+
+    vi.doMock('node:stream/promises', () => ({
+      pipeline: vi.fn(async (readable: NodeJS.ReadableStream, writable: NodeJS.WritableStream) => {
+        await new Promise<void>((resolve, reject) => {
+          readable.pipe(writable);
+          writable.on('finish', resolve);
+          writable.on('error', reject);
+        });
+      }),
+    }));
+
+    vi.doMock('yazl', async () => {
+      const { PassThrough } = await import('node:stream');
+      return {
+        ZipFile: class {
+          outputStream = new PassThrough();
+          addBuffer(buffer: Buffer, name: string) {
+            this.outputStream.write(Buffer.from(`${name}:${buffer.length};`));
+          }
+          addFile(filePath: string, name: string) {
+            this.outputStream.write(Buffer.from(`${name}:${filePath};`));
+          }
+          end() {
+            this.outputStream.end();
+          }
+        },
+      };
+    });
+
+    const { buildProgram } = await import('../program');
+    const program = buildProgram({ createTransport: () => transport }).exitOverride();
+
+    await program.parseAsync(['support', 'trace', '--output', 'support/bundle.zip'], {
+      from: 'user',
+    });
+
+    expect(written.join('')).toContain('metadata.json');
+    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Diagnostics bundle written'));
+
+    vi.doUnmock('node:fs');
+    vi.doUnmock('node:stream/promises');
+    vi.doUnmock('yazl');
+  });
+
   it('performs bind-test and reports status', async () => {
     const { transport } = createTransportMock();
     const { buildProgram } = await import('../program');
