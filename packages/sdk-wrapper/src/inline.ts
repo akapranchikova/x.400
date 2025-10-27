@@ -16,7 +16,6 @@ import {
   type MessageEnvelope,
   type MigrationProgress,
   type MigrationReport,
-  type MigrationRequest,
 } from '@x400/shared';
 
 import {
@@ -100,7 +99,7 @@ const sampleInboundMessages = inboundGatewayMessageSchema.array().parse([
 
 const migrationJobs = new Map<string, { progress: MigrationProgress; report: MigrationReport }>();
 
-export const createInlineTransport: TransportFactory = (_options) => {
+export const createInlineTransport: TransportFactory = () => {
   const folderState = new Map<Folder['id'], Folder>(
     folderListSchema.parse(inlineFolders).map((folder) => [folder.id, clone(folder)]),
   );
