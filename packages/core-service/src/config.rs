@@ -50,7 +50,7 @@ impl Default for DatabaseConfig {
 }
 
 /// Aggregated application configuration.
-#[derive(Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct AppConfig {
     pub server: ServerConfig,
     pub database: DatabaseConfig,
@@ -338,7 +338,7 @@ impl Default for DirectoryCacheConfig {
         }
     }
 }
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct TelemetryConfig {
     pub enabled: bool,
     pub endpoint: Option<String>,

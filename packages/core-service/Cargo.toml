@@ -27,7 +27,6 @@ tracing-appender = "0.2"
 tracing-opentelemetry = "0.22"
 opentelemetry = { version = "0.21", features = ["trace"] }
 opentelemetry_sdk = { version = "0.21", features = ["rt-tokio", "trace"] }
-async-trait = "0.1"
 
 [dev-dependencies]
 tempfile = "3"
