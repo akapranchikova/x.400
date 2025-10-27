@@ -3,6 +3,7 @@ use std::fmt;
 use std::fs::{self, OpenOptions};
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
+use std::pin::Pin;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, SystemTime};
 
@@ -10,8 +11,8 @@ use once_cell::sync::OnceCell;
 use opentelemetry::global;
 use opentelemetry::trace::TracerProvider;
 use opentelemetry::KeyValue;
-use opentelemetry_sdk::export::trace::{BoxFuture, ExportResult, SpanData, SpanExporter};
-use opentelemetry_sdk::trace::{self, Tracer};
+use opentelemetry_sdk::export::trace::{ExportResult, SpanData, SpanExporter};
+use opentelemetry_sdk::trace;
 use opentelemetry_sdk::Resource;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -19,6 +20,7 @@ use thiserror::Error;
 use tracing::warn;
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_opentelemetry::OpenTelemetryLayer;
+use tracing_subscriber::util::SubscriberInitError;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 use zip::result::ZipError;
 use zip::write::FileOptions;
@@ -30,7 +32,7 @@ pub enum TelemetryError {
     #[error("telemetry IO failure: {0}")]
     Io(#[from] io::Error),
     #[error("failed to initialise tracing: {0}")]
-    Install(&'static str),
+    Install(SubscriberInitError),
     #[error("telemetry archive failure: {0}")]
     Archive(#[from] ZipError),
 }
@@ -341,7 +343,10 @@ impl fmt::Debug for FileSpanExporter {
 }
 
 impl SpanExporter for FileSpanExporter {
-    fn export(&mut self, batch: Vec<SpanData>) -> BoxFuture<'static, ExportResult> {
+    fn export(
+        &mut self,
+        batch: Vec<SpanData>,
+    ) -> Pin<Box<dyn std::future::Future<Output = ExportResult> + Send + 'static>> {
         let manager = self.manager.clone();
         Box::pin(async move {
             if !manager.inner.config.enabled {
@@ -368,12 +373,14 @@ impl SpanExporter for FileSpanExporter {
         })
     }
 
-    fn shutdown(&mut self) -> BoxFuture<'static, ExportResult> {
+    fn shutdown(
+        &mut self,
+    ) -> Pin<Box<dyn std::future::Future<Output = ExportResult> + Send + 'static>> {
         Box::pin(async { Ok(()) })
     }
 }
 
-pub fn tracer(flow: &str) -> Tracer {
+pub fn tracer(flow: &str) -> opentelemetry::global::BoxedTracer {
     let provider = global::tracer_provider();
     provider.tracer(flow)
 }

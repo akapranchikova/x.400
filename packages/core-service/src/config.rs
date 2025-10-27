@@ -50,7 +50,7 @@ impl Default for DatabaseConfig {
 }
 
 /// Aggregated application configuration.
-#[derive(Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct AppConfig {
     pub server: ServerConfig,
     pub database: DatabaseConfig,
