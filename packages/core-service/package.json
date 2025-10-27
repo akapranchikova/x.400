@@ -8,8 +8,11 @@
     "test": "cargo test",
     "gateway-tests": "cargo test gateway",
     "directory-tests": "cargo test directory",
+    "coverage": "cargo llvm-cov --workspace --lcov --output-path coverage/lcov.info --html",
     "lint": "cargo clippy --all-targets --all-features -- -D warnings",
     "format": "cargo fmt",
-    "audit": "cargo audit"
+    "audit": "cargo audit",
+    "fuzz:smoke": "cargo fuzz run address_map -- -max_total_time=10",
+    "perf:smoke": "cargo bench --bench address_map -- --warm-up-time 0.1 --measurement-time 0.2 --sample-size 10"
   }
 }

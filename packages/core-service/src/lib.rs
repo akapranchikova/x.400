@@ -4,6 +4,7 @@ pub mod gateway;
 pub mod migration;
 pub mod mock_provider;
 pub mod models;
+pub mod parsers;
 pub mod queue;
 pub mod store;
 pub mod support;

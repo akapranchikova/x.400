@@ -24,6 +24,7 @@
     "lint": "eslint 'src/**/*.{ts,tsx}'",
     "test": "vitest run",
     "coverage": "vitest run --coverage",
+    "test:prop": "vitest run --include 'src/**/*.property.test.ts'",
     "format": "prettier --write 'src/**/*.{ts,tsx}'"
   },
   "dependencies": {
@@ -33,10 +34,10 @@
   },
   "devDependencies": {
     "@apidevtools/swagger-parser": "^10.0.3",
+    "@vitest/coverage-v8": "^1.2.2",
     "nock": "^13.5.5",
     "tsup": "^8.2.4",
     "typescript": "^5.3.3",
-    "vitest": "^1.2.2",
-    "@vitest/coverage-v8": "^1.2.2"
+    "vitest": "^1.2.2"
   }
 }

@@ -77,3 +77,8 @@ export const reconnectTransport = async () => {
   await transportInstance.connect();
   return transportInstance;
 };
+
+export const __testing = {
+  parseBoolean,
+  readEnvValue,
+};

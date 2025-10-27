@@ -17,6 +17,10 @@
       "dependsOn": ["test"],
       "outputs": ["coverage/**", "test-results/**"]
     },
+    "test:prop": {
+      "dependsOn": ["^test:prop"],
+      "outputs": ["coverage/**", "test-results/**"]
+    },
     "gateway-tests": {
       "dependsOn": ["^build"],
       "outputs": ["test-results/**"]
@@ -35,6 +39,13 @@
     },
     "format": {
       "outputs": []
+    },
+    "contract:check": {
+      "outputs": []
+    },
+    "perf:smoke": {
+      "outputs": [],
+      "cache": false
     },
     "docs": {
       "dependsOn": ["^docs"],

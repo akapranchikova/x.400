@@ -32,7 +32,7 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true, // ← это нужно, чтобы describe/it/expect были глобально
     setupFiles: ['./src/test/setup.ts'], // ← путь до setup (от корня пакета ui-client)
-    include: ['src/**/*.spec.ts?(x)'],
+    include: ['src/**/*.spec.ts?(x)', 'src/**/*.property.test.ts?(x)'],
     exclude: [
       'node_modules',
       'dist',
@@ -48,6 +48,15 @@ export default defineConfig({
     },
     deps: {
       inline: ['@x400/sdk-wrapper'],
+    },
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov', 'html'],
+      reportsDirectory: 'coverage',
+      lines: 0.8,
+      branches: 0.8,
+      functions: 0.8,
+      statements: 0.8,
     },
   },
 });

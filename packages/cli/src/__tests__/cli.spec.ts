@@ -175,6 +175,14 @@ describe('CLI program', () => {
     sharedModule = await importShared();
   });
 
+  it('matches CLI help output snapshot', async () => {
+    const { transport } = createTransportMock();
+    const { buildProgram } = await import('../program');
+    const program = buildProgram({ createTransport: () => transport });
+
+    expect(program.helpInformation()).toMatchSnapshot();
+  });
+
   it('lists folders when invoked with --folders', async () => {
     const { transport } = createTransportMock();
     const { buildProgram } = await import('../program');
@@ -413,5 +421,23 @@ describe('CLI program', () => {
     );
     expect(transport.migration.report).toHaveBeenCalledWith('job-123');
     expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Migration completed'));
+
+    const jsonOutputs = consoleSpy.mock.calls
+      .map(([entry]) => entry)
+      .filter(
+        (entry): entry is string => typeof entry === 'string' && entry.trim().startsWith('{'),
+      );
+
+    jsonOutputs
+      .map((entry) => JSON.parse(entry))
+      .forEach((payload) => {
+        if (payload.type === 'progress') {
+          expect(() => sharedModule.migrationProgressSchema.parse(payload)).not.toThrow();
+        } else if (payload.type === 'report') {
+          expect(() => sharedModule.migrationReportSchema.parse(payload.report)).not.toThrow();
+        } else {
+          expect(() => sharedModule.migrationReportSchema.parse(payload)).not.toThrow();
+        }
+      });
   });
 });
