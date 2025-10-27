@@ -20,6 +20,53 @@ const createTransportMock = () => {
       connectedAt: new Date().toISOString(),
       peer: 'mock',
     }),
+    gateway: {
+      send: vi.fn().mockImplementation(async (payload: { to: string[] }) => ({
+        messageId: message.envelope.id,
+        accepted: true,
+        recipients: payload.to,
+        warnings: [],
+      })),
+      peekInbound: vi.fn().mockResolvedValue({
+        messages: [
+          {
+            uid: 'gateway-1',
+            subject: 'Mock gateway message',
+            from: 'C=DE;O=Gateway;S=Mock',
+          },
+        ],
+      }),
+      acknowledge: vi.fn().mockImplementation(async (ids: string[]) => ({
+        acknowledged: ids.length,
+      })),
+      preview: vi.fn().mockResolvedValue({
+        mapped: 'C=DE;O=Gateway;S=Preview',
+        warnings: [],
+      }),
+    },
+    directory: {
+      search: vi.fn().mockResolvedValue([
+        {
+          id: 'entry-1',
+          displayName: 'Mock Directory Entry',
+          rfc822: 'mock@example.com',
+          orAddress: 'C=DE;O=Directory;S=Mock',
+          attributes: {},
+        },
+      ]),
+      getEntry: vi.fn().mockResolvedValue({
+        id: 'entry-1',
+        displayName: 'Mock Directory Entry',
+        rfc822: 'mock@example.com',
+        orAddress: 'C=DE;O=Directory;S=Mock',
+        attributes: {},
+      }),
+      getDistributionList: vi.fn().mockResolvedValue({
+        id: 'dl-1',
+        name: 'Mock Distribution List',
+        members: ['C=DE;O=Directory;S=Member'],
+      }),
+    },
     folders: {
       listFolders: vi.fn().mockResolvedValue([
         { id: 'inbox', name: 'Inbox', unreadCount: 1 },

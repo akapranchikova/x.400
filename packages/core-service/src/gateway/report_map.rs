@@ -53,7 +53,7 @@ mod tests {
 
     #[test]
     fn parses_dsn_status_line() {
-        let mapper = ReportMapper::default();
+        let mapper = ReportMapper;
         let report = mapper.from_dsn("Status: 2.0.0\nAction: delivered", "abc");
         assert_eq!(report.status, "2.0.0");
         assert_eq!(report.correlation_id, "abc");
@@ -61,7 +61,7 @@ mod tests {
 
     #[test]
     fn serializes_to_dsn() {
-        let mapper = ReportMapper::default();
+        let mapper = ReportMapper;
         let payload = mapper.to_dsn(&DeliveryReport {
             correlation_id: "123".into(),
             status: "2.0.0".into(),

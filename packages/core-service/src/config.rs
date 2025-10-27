@@ -192,23 +192,12 @@ impl AppConfig {
 }
 
 /// Gateway specific configuration describing SMTP/IMAP behaviour.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Default, Clone, Debug, PartialEq, Eq)]
 pub struct GatewayConfig {
     pub smtp: GatewaySmtpConfig,
     pub imap: GatewayImapConfig,
     pub mapping: GatewayMappingConfig,
     pub security: GatewaySecurityConfig,
-}
-
-impl Default for GatewayConfig {
-    fn default() -> Self {
-        Self {
-            smtp: GatewaySmtpConfig::default(),
-            imap: GatewayImapConfig::default(),
-            mapping: GatewayMappingConfig::default(),
-            security: GatewaySecurityConfig::default(),
-        }
-    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -284,19 +273,10 @@ impl Default for GatewaySecurityConfig {
 }
 
 /// Directory configuration describing LDAP/X.500 connectivity.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Default, Clone, Debug, PartialEq, Eq)]
 pub struct DirectoryConfig {
     pub ldap: LdapConfig,
     pub cache: DirectoryCacheConfig,
-}
-
-impl Default for DirectoryConfig {
-    fn default() -> Self {
-        Self {
-            ldap: LdapConfig::default(),
-            cache: DirectoryCacheConfig::default(),
-        }
-    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

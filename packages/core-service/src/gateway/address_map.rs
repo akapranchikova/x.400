@@ -68,7 +68,7 @@ impl AddressMappingRule {
     }
 
     fn as_regex(&self) -> Option<Regex> {
-        let mut escaped = Regex::escape(&self.template);
+        let mut escaped = regex::escape(&self.template);
         for placeholder in ["G", "S", "O", "C"] {
             let token = format!("\\{{{placeholder}\\}}");
             if escaped.contains(&token) {
