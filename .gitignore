@@ -15,4 +15,7 @@ apps/ui-client/src-tauri/target
 /traces/*
 /certs/*
 
+
+apps/ui-client/test-results
+apps/ui-client/playwright-report
 .turbo

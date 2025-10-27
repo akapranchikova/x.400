@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import type { IServiceStatus } from '@x400/sdk-wrapper';
-import JSZip from 'jszip';
+import { ZipBuilder } from '@x400/shared';
 
 import { getTransport } from '../lib/transport';
 
@@ -147,7 +147,7 @@ export const DiagnosticsPanel = ({
         .then((data) => (Array.isArray(data?.entries) ? data.entries : []))
         .catch(() => []);
       const telemetry = snapshot ?? (await fetchSnapshot(sessionPeer));
-      const zip = new JSZip();
+      const zip = new ZipBuilder();
       const metadata = {
         createdAt: new Date().toISOString(),
         sessionPeer,
@@ -155,12 +155,12 @@ export const DiagnosticsPanel = ({
         status,
         telemetryAvailable: Boolean(telemetry),
       };
-      zip.file('metadata.json', JSON.stringify(metadata, null, 2));
-      zip.file('trace.json', JSON.stringify(bundle, null, 2));
+      zip.addJson('metadata.json', metadata);
+      zip.addJson('trace.json', bundle);
       if (telemetry) {
-        zip.file('snapshot.json', JSON.stringify(telemetry, null, 2));
+        zip.addJson('snapshot.json', telemetry);
       }
-      const archive = await zip.generateAsync({ type: 'arraybuffer' });
+      const archive = await zip.build();
       const baseUrl = sessionPeer ?? 'http://127.0.0.1:3333';
       const endpoint = new URL('/support/upload', baseUrl).toString();
       const response = await fetch(endpoint, {
