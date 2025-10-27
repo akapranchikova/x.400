@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import type { IServiceStatus } from '@x400/sdk-wrapper';
-import JSZip from 'jszip';
+import { ZipBuilder } from '@x400/shared/utils/zip';
 
 import { getTransport } from '../lib/transport';
 
@@ -147,7 +147,7 @@ export const DiagnosticsPanel = ({
         .then((data) => (Array.isArray(data?.entries) ? data.entries : []))
         .catch(() => []);
       const telemetry = snapshot ?? (await fetchSnapshot(sessionPeer));
-      const zip = new JSZip();
+      const zip = new ZipBuilder();
       const metadata = {
         createdAt: new Date().toISOString(),
         sessionPeer,

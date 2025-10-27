@@ -133,3 +133,5 @@ export const calculateSha256 = (payload: string | ArrayBuffer | ArrayBufferView)
 
 export const normalizeFsPath = (input: string): string =>
   input.replace(/\\+/g, '/').replace(/\/{2,}/g, '/');
+
+export * from './zip';

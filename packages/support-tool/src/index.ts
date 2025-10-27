@@ -2,10 +2,10 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
-import JSZip from 'jszip';
 import { bold, green, red, yellow } from 'kleur/colors';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
+import { parseStoredZip, readZipJson } from '@x400/shared/utils/zip';
 
 const EMAIL_PATTERN = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
 
@@ -20,29 +20,17 @@ type BundleReport = {
   issues: string[];
 };
 
-const readJson = async <T>(zip: JSZip, file: string): Promise<T | null> => {
-  const entry = zip.file(file);
-  if (!entry) return null;
-  const content = await entry.async('string');
-  try {
-    return JSON.parse(content) as T;
-  } catch (error) {
-    console.warn(`Unable to parse ${file}:`, error);
-    return null;
-  }
-};
-
 const analyzeBundle = async (bundlePath: string): Promise<BundleReport> => {
   const contents = await fs.readFile(bundlePath);
-  const zip = await JSZip.loadAsync(contents);
-  const metadata = (await readJson<Record<string, unknown>>(zip, 'metadata.json')) ?? {};
-  const snapshot = await readJson<{
+  const entries = parseStoredZip(contents);
+  const metadata = readZipJson<Record<string, unknown>>(entries, 'metadata.json') ?? {};
+  const snapshot = readZipJson<{
     metrics: { messages_sent: number; error_count: number; queue_depth: number };
     average_latency_ms: number;
     last_errors?: string[];
     events?: unknown[];
-  }>(zip, 'snapshot.json');
-  const trace = await readJson<unknown>(zip, 'trace.json');
+  }>(entries, 'snapshot.json');
+  const trace = readZipJson<unknown>(entries, 'trace.json');
   const issues: string[] = [];
 
   if (!snapshot) {
