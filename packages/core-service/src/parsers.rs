@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::io::{self, Read, Seek};
 
 use thiserror::Error;
-use zip::ZipArchive;
+use zip::{result::ZipError, ZipArchive};
 
 #[derive(Debug, Error, PartialEq, Eq)]
 pub enum FwmParseError {
@@ -35,6 +35,8 @@ pub fn parse_fwm(input: &str) -> Result<HashMap<String, String>, FwmParseError> 
 pub enum FwzValidationError {
     #[error(transparent)]
     Io(#[from] io::Error),
+    #[error(transparent)]
+    Zip(#[from] ZipError),
     #[error("archive entry path is unsafe: {0}")]
     PathTraversal(String),
 }

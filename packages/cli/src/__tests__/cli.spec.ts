@@ -423,14 +423,17 @@ describe('CLI program', () => {
     expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Migration completed'));
 
     const jsonOutputs = consoleSpy.mock.calls
-      .map(([entry]) => entry)
+      .map(([entry]: [unknown]) => entry)
       .filter(
-        (entry): entry is string => typeof entry === 'string' && entry.trim().startsWith('{'),
+        (entry: unknown): entry is string =>
+          typeof entry === 'string' && entry.trim().startsWith('{'),
       );
 
+    type MigrationPayload = { type?: string; report?: unknown } & Record<string, unknown>;
+
     jsonOutputs
-      .map((entry) => JSON.parse(entry))
-      .forEach((payload) => {
+      .map((entry: string) => JSON.parse(entry) as MigrationPayload)
+      .forEach((payload: MigrationPayload) => {
         if (payload.type === 'progress') {
           expect(() => sharedModule.migrationProgressSchema.parse(payload)).not.toThrow();
         } else if (payload.type === 'report') {

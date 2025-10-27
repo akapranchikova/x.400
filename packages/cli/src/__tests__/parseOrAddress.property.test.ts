@@ -41,11 +41,11 @@ describe('parseOrAddress property-based invariants', () => {
     const generator = arb.createAddressGenerator(11);
     for (let run = 0; run < 150; run += 1) {
       const address = generator.nextAddress();
-      const raw = toOrString({
-        ...address,
-        orName: { ...address.orName, c: undefined },
-      });
-      const padded = raw.replace(/=/g, '= ');
+      const rawWithoutCountry = toOrString(address)
+        .split(';')
+        .filter((segment) => !segment.startsWith('C='))
+        .join(';');
+      const padded = rawWithoutCountry.replace(/=/g, '= ');
       const parsed = parseOrAddress(padded);
       expect(parsed.orName.c).toBe('XX');
       parsed.orName.ou.forEach((ou) => expect(ou).toBe(ou.trim()));
