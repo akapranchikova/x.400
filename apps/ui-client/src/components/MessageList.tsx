@@ -48,7 +48,7 @@ export const MessageList = ({ messages, selectedId, onSelect, loading }: Message
                 aria-hidden
               />
             </div>
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-slate-700">
               {message.sender.orName.o ?? 'Unknown organization'} •{' '}
               {new Date(message.createdAt).toLocaleString()}
             </p>
