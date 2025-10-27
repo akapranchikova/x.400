@@ -84,9 +84,44 @@ pnpm install
 
 ### Run in development
 
-```bash
-pnpm dev
-```
+1. Copy and validate the environment configuration (skips existing files):
+
+   ```bash
+   pnpm run env:copy
+   pnpm run env:check
+   ```
+
+2. Start the full workspace in watch mode. Passing `--output-logs=stream` keeps
+   every process attached to the terminal instead of collapsing previous
+   entries:
+
+   ```bash
+   pnpm dev -- --output-logs=stream
+   ```
+
+   Turbo spawns the following processes and keeps them running:
+
+   | Package / command                    | Purpose                                             | Default endpoint                       |
+   | ------------------------------------ | --------------------------------------------------- | -------------------------------------- |
+   | `@x400/core-service` → `cargo run`   | Mock Rust IPC server used by the UI and CLI         | `http://127.0.0.1:3333`                |
+   | `apps/ui-client` → `vite`            | Web UI dev server                                   | `http://localhost:5173`                |
+   | `apps/ui-client` → `tauri dev`¹      | Desktop shell hooking into the Vite dev server      | Window shell → `http://localhost:1420` |
+   | `@x400/sdk-wrapper` / `@x400/shared` | TypeScript build/watch pipelines consumed by the UI | _n/a_                                  |
+   | `@x400/cli`                          | Rebuilds the CLI bundle for local smoke tests       | _n/a_                                  |
+
+   ¹Launch the shell explicitly with `pnpm --filter ui-client tauri dev` when
+   you want the desktop window. The command reuses the Vite server above so no
+   extra configuration is required.
+
+   The core service prints the bound address as soon as it loads the config:
+
+   ```text
+   Core service initialised on 127.0.0.1:3333 with <N> queued messages
+   ```
+
+   You can change the binding by editing
+   [`packages/core-service/config/default.toml`](packages/core-service/config/default.toml)
+   or overriding `CORE_IPC_HOST` / `CORE_IPC_PORT` in `.env`.
 
 ### Environment Variables
 
@@ -108,6 +143,24 @@ Key variables shipped in [`.env.example`](./.env.example):
 | `TAURI_DEV_HOST`                  | `http://localhost:1420` | Desktop shell / Tauri dev server             |
 
 See [docs/environment.md](packages/docs/docs/environment.md) for the full catalog and CI behaviour notes.
+
+### Development troubleshooting
+
+- **Another service already uses a port** – `EADDRINUSE` in the console means
+  either the Rust service (`3333`) or the Vite dev server (`5173`) is still
+  running. Stop stray processes or change the port via `.env` (for the core
+  service) or by passing `--port <free-port>` to
+  `pnpm --filter ui-client dev`.
+- **The desktop window does not appear** – run
+  `pnpm --filter ui-client tauri dev`. The Tauri shell only launches on demand;
+  the default `pnpm dev` command keeps the web UI running in the browser.
+- **Terminal output keeps resetting** – Turbo collapses task logs by default.
+  Pass `--output-logs=stream` (as in the command above) or `--output-logs=full`
+  to persist previous output. You can also run individual tasks directly (for
+  example `pnpm --filter @x400/core-service dev`) to keep a dedicated console.
+- **Environment variables are missing** – run `pnpm run env:copy` to recreate
+  `.env` from the template and `pnpm run env:check` to ensure the required keys
+  (`CORE_IPC_PORT`, `X400_MODE`, etc.) are exported before starting services.
 
 ### Build all packages
 
