@@ -39,7 +39,7 @@ export const MessageList = ({ messages, selectedId, onSelect, loading }: Message
             onClick={() => onSelect(message.id)}
           >
             <div className="flex items-center justify-between gap-2">
-              <h3 className="text-sm font-semibold text-slate-800">{message.subject}</h3>
+              <p className="text-sm font-semibold text-slate-800">{message.subject}</p>
               <span
                 className={clsx(
                   'inline-flex h-2 w-2 rounded-full',
@@ -48,7 +48,7 @@ export const MessageList = ({ messages, selectedId, onSelect, loading }: Message
                 aria-hidden
               />
             </div>
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-slate-700">
               {message.sender.orName.o ?? 'Unknown organization'} •{' '}
               {new Date(message.createdAt).toLocaleString()}
             </p>

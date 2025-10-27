@@ -43,10 +43,9 @@ describe('MessageList', () => {
       />,
     );
 
-    // Find the heading with exact subject, then climb to the wrapping button.
-    const btn = screen
-      .getByRole('heading', { name: thread[0].subject })
-      .closest('button') as HTMLButtonElement;
+    const btn = screen.getByRole('button', {
+      name: (name) => name.startsWith(thread[0].subject),
+    });
 
     expect(btn).toBeInTheDocument();
     expect(btn).toHaveClass('bg-blue-100'); // selected item is highlighted
@@ -61,9 +60,9 @@ describe('MessageList', () => {
       <MessageList messages={thread} selectedId={null} onSelect={handleSelect} loading={false} />,
     );
 
-    const btn = screen
-      .getByRole('heading', { name: thread[1].subject })
-      .closest('button') as HTMLButtonElement;
+    const btn = screen.getByRole('button', {
+      name: (name) => name.startsWith(thread[1].subject),
+    });
 
     await user.click(btn);
     expect(handleSelect).toHaveBeenCalledWith(thread[1].id);

@@ -6,7 +6,10 @@ interface SavedFiltersBarProps {
 
 export const SavedFiltersBar = ({ filters, onSelect, onSave }: SavedFiltersBarProps) => {
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-md border border-slate-200 bg-white/80 p-2 text-xs text-slate-600">
+    <nav
+      aria-label="Saved filters"
+      className="flex flex-wrap items-center gap-2 rounded-md border border-slate-200 bg-white/80 p-2 text-xs text-slate-600"
+    >
       <span className="font-medium">Saved filters:</span>
       {filters.length === 0 ? (
         <span className="text-slate-400">
@@ -31,6 +34,6 @@ export const SavedFiltersBar = ({ filters, onSelect, onSave }: SavedFiltersBarPr
       >
         Save current filter
       </button>
-    </div>
+    </nav>
   );
 };

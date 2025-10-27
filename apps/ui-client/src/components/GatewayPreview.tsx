@@ -10,7 +10,7 @@ export const GatewayPreview = ({ mapping, onPreview }: GatewayPreviewProps) => {
       aria-label="Gateway preview"
     >
       <header className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-700">Gateway preview</h3>
+        <h2 className="text-sm font-semibold text-slate-700">Gateway preview</h2>
         <button
           type="button"
           className="rounded-md border border-slate-200 px-3 py-1 text-xs"
