@@ -73,7 +73,7 @@ impl GatewaySmtpClient {
 
     /// Submit a message to the mocked SMTP relay.
     pub fn send(&self, message: SmtpMessage) -> Result<SmtpSendOutcome, SmtpError> {
-        if self.config.tls == false {
+        if !self.config.tls {
             return Err(SmtpError::TlsRequired);
         }
         for recipient in &message.to {

@@ -145,7 +145,7 @@ mod tests {
 
     #[test]
     fn sends_outbound_messages() {
-        let adapter = GatewayAdapter::new(mapper(), smtp(), imap(), ReportMapper::default());
+        let adapter = GatewayAdapter::new(mapper(), smtp(), imap(), ReportMapper);
         let originator = Address {
             country: "DE".into(),
             organization: "Org".into(),
@@ -165,7 +165,7 @@ mod tests {
 
     #[test]
     fn maps_inbound_sender() {
-        let adapter = GatewayAdapter::new(mapper(), smtp(), imap(), ReportMapper::default());
+        let adapter = GatewayAdapter::new(mapper(), smtp(), imap(), ReportMapper);
         let address = adapter.map_sender("receiver@example.com").unwrap();
         assert_eq!(address.surname, "Receiver");
     }
