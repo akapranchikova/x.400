@@ -376,11 +376,7 @@ impl SpanExporter for FileSpanExporter {
         })
     }
 
-    fn shutdown(
-        &mut self,
-    ) -> Pin<Box<dyn std::future::Future<Output = ExportResult> + Send + 'static>> {
-        Box::pin(async { Ok(()) })
-    }
+    fn shutdown(&mut self) {}
 }
 
 pub fn tracer(flow: &str) -> opentelemetry::global::BoxedTracer {
